@@ -14,6 +14,10 @@
 
 *No vectors. No softmax. No backpropagation. Just typed relations and surprise.*
 
+### [↗ Explore the interactive homepage](https://infinitule.github.io/TORIS/)
+
+<sub>A long-scroll visual walkthrough: the architecture, the science, and why a relational AI reaches for Ramanujan.</sub>
+
 </div>
 
 ---
