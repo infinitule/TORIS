@@ -1,448 +1,773 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TORIS | Topological Relational Inference System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=JetBrains+Mono:wght@100;400;800&family=Outfit:wght@100;400;900&display=swap');
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TORIS — Topological Relational Inference System</title>
+<meta name="description" content="A new computational substrate for machine reasoning. No vectors. No softmax. No backpropagation. Built on typed relations, topological surprise, and the mathematics of Ramanujan." />
 
-        :root {
-            --obsidian: #020202;
-            --void: #000000;
-            --topo-blue: #00F2FF;
-            --surprise-magenta: #FF00FF;
-            --field-gold: #C5A059;
-            --panel-bg: rgba(2, 2, 2, 0.85);
-        }
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,400;1,9..144,600&family=Spectral:ital,wght@0,300;0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-        body {
-            background-color: var(--void);
-            color: #E5E5E5;
-            font-family: 'Outfit', sans-serif;
-            overflow: hidden;
-            height: 100vh;
-            cursor: none;
-        }
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
 
-        .serif { font-family: 'Cormorant Garamond', serif; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
+<style>
+:root{
+  --bg:#0a0907;
+  --bg-2:#100e0b;
+  --panel:#13110d;
+  --ink:#ece6da;
+  --ink-dim:#a89f8e;
+  --ink-faint:#6b6354;
+  --teal:#5fe3d0;
+  --teal-deep:#1b8f81;
+  --coral:#ff6b81;
+  --gold:#e3b25b;
+  --gold-deep:#b6863a;
+  --line:rgba(236,230,218,.10);
+  --line-strong:rgba(236,230,218,.22);
+  --serif:'Spectral',Georgia,serif;
+  --display:'Fraunces',Georgia,serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --maxw:1180px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--serif);
+  font-weight:400;
+  line-height:1.65;
+  font-size:18px;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+/* grain + vignette atmosphere */
+body::before{
+  content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% -10%, rgba(95,227,208,.06), transparent 55%),
+             radial-gradient(80% 60% at 100% 110%, rgba(227,178,91,.05), transparent 60%);
+  mix-blend-mode:screen;
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+::selection{background:var(--teal);color:#04110f}
+a{color:inherit;text-decoration:none}
 
-        #custom-cursor {
-            width: 24px; height: 24px;
-            border: 1px solid var(--topo-blue);
-            border-radius: 50%;
-            position: fixed;
-            pointer-events: none;
-            z-index: 9999;
-            mix-blend-mode: screen;
-            transition: transform 0.1s ease-out;
-        }
+/* scroll progress */
+#progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:60;
+  background:linear-gradient(90deg,var(--teal),var(--gold));box-shadow:0 0 12px var(--teal)}
 
-        .glass-panel {
-            background: var(--panel-bg);
-            backdrop-filter: blur(24px);
-            border: 1px solid rgba(0, 242, 255, 0.1);
-            box-shadow: 0 0 40px rgba(0,0,0,0.5);
-        }
+/* nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;
+  padding:18px clamp(20px,5vw,56px);
+  backdrop-filter:blur(10px);
+  background:linear-gradient(180deg,rgba(10,9,7,.86),rgba(10,9,7,0));
+  border-bottom:1px solid transparent;transition:border-color .4s,background .4s}
+nav.scrolled{border-bottom:1px solid var(--line);background:rgba(10,9,7,.9)}
+.brand{font-family:var(--mono);font-size:14px;letter-spacing:.32em;font-weight:600;color:var(--ink)}
+.brand b{color:var(--teal)}
+.navlinks{display:flex;gap:26px;font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim)}
+.navlinks a{position:relative;transition:color .25s}
+.navlinks a:hover{color:var(--teal)}
+.navlinks a::after{content:"";position:absolute;left:0;bottom:-5px;width:0;height:1px;background:var(--teal);transition:width .3s}
+.navlinks a:hover::after{width:100%}
+@media(max-width:860px){.navlinks{display:none}}
 
-        .neon-border-blue { border-color: var(--topo-blue); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
-        .neon-text-blue { color: var(--topo-blue); text-shadow: 0 0 10px var(--topo-blue); }
-        .neon-text-magenta { color: var(--surprise-magenta); text-shadow: 0 0 10px var(--surprise-magenta); }
+/* layout */
+section{position:relative;z-index:3;padding:clamp(80px,11vw,170px) clamp(20px,5vw,56px)}
+.wrap{max-width:var(--maxw);margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.36em;text-transform:uppercase;color:var(--teal-deep);display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.eyebrow::before{content:"";width:34px;height:1px;background:var(--teal-deep)}
+.eyebrow .gold{color:var(--gold-deep)}
+.eyebrow.goldline::before{background:var(--gold-deep)}
 
-        .hud-overlay {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            background:
-                linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px) 0 0 / 40px 40px,
-                linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px) 0 0 / 40px 40px;
-            mask-image: radial-gradient(circle at center, black, transparent 80%);
-        }
+h2{font-family:var(--display);font-weight:600;font-size:clamp(2rem,5vw,3.5rem);line-height:1.04;letter-spacing:-.015em}
+h3{font-family:var(--display);font-weight:600;font-size:clamp(1.3rem,2.4vw,1.7rem);line-height:1.12}
+.lead{font-size:clamp(1.1rem,1.7vw,1.35rem);color:var(--ink-dim);max-width:60ch;margin-top:22px;line-height:1.6}
+em,.ital{font-style:italic}
+.tk{color:var(--teal)}.cr{color:var(--coral)}.gd{color:var(--gold)}
+.mono{font-family:var(--mono)}
 
-        .manifold-tab {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-left: 2px solid transparent;
-        }
-        .manifold-tab.active {
-            border-left: 2px solid var(--topo-blue);
-            background: rgba(0, 242, 255, 0.05);
-            color: var(--topo-blue);
-            padding-left: 1.5rem;
-        }
+/* hero */
+#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding-top:120px;overflow:hidden}
+#field{position:absolute;inset:0;z-index:0;opacity:.55}
+#hero .wrap{position:relative;z-index:4}
+.hero-kicker{font-family:var(--mono);font-size:12px;letter-spacing:.4em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:30px}
+.hero-title{font-family:var(--display);font-weight:900;font-size:clamp(3.4rem,12vw,9rem);line-height:.86;letter-spacing:-.04em}
+.hero-title .o{color:var(--teal);font-style:italic;font-weight:600}
+.hero-sub{font-family:var(--display);font-style:italic;font-weight:400;font-size:clamp(1.4rem,3.4vw,2.4rem);color:var(--ink);margin-top:34px;line-height:1.2;max-width:20ch}
+.hero-desc{margin-top:30px;max-width:54ch;color:var(--ink-dim);font-size:1.12rem}
+.hero-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:38px;font-family:var(--mono);font-size:12px;letter-spacing:.1em}
+.hero-tags span{border:1px solid var(--line-strong);border-radius:999px;padding:7px 15px;color:var(--ink-dim)}
+.hero-tags span b{color:var(--teal);font-weight:600}
+.scrollcue{margin-top:60px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-faint);display:flex;align-items:center;gap:12px}
+.scrollcue .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.3)}}
 
-        .depth-navigator {
-            background: linear-gradient(to bottom, transparent, rgba(0, 242, 255, 0.05), transparent);
-        }
+/* reveal */
+.rv{opacity:0;transform:translateY(28px);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1)}
+.rv.in{opacity:1;transform:none}
+.rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}.rv.d4{transition-delay:.32s}
 
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(0, 242, 255, 0.2); border-radius: 10px; }
+/* divider */
+.rule{height:1px;background:var(--line);max-width:var(--maxw);margin:0 auto}
 
-        .scanline {
-            width: 100%; height: 100px;
-            background: linear-gradient(to bottom, transparent, rgba(0, 242, 255, 0.05), transparent);
-            position: absolute;
-            top: -100px;
-            pointer-events: none;
-            animation: scan 8s linear infinite;
-        }
-        @keyframes scan {
-            0% { top: -100px; }
-            100% { top: 100vh; }
-        }
-    </style>
+/* premise pull-quote */
+.premise p{font-family:var(--display);font-weight:400;font-size:clamp(1.5rem,3.6vw,2.6rem);line-height:1.28;letter-spacing:-.01em;max-width:24ch}
+.premise .small{font-family:var(--serif);font-size:1.15rem;color:var(--ink-dim);max-width:62ch;margin-top:34px;line-height:1.7}
+
+/* comparison */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:54px;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.cmp .col{padding:clamp(22px,3vw,38px)}
+.cmp .old{background:#0d0c0a}
+.cmp .new{background:linear-gradient(180deg,rgba(95,227,208,.05),rgba(95,227,208,.01));border-left:1px solid var(--line)}
+.cmp .ch{font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;margin-bottom:24px}
+.cmp .old .ch{color:var(--ink-faint)}
+.cmp .new .ch{color:var(--teal)}
+.cmp .row{padding:16px 0;border-top:1px solid var(--line)}
+.cmp .row:first-of-type{border-top:none}
+.cmp .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px}
+.cmp .old .v{color:var(--ink-dim)}
+.cmp .new .v{color:var(--ink);font-weight:500}
+.cmp .new .v b{color:var(--teal);font-weight:600}
+.cmp .strike{text-decoration:line-through;text-decoration-color:var(--coral);text-decoration-thickness:1px;opacity:.7}
+@media(max-width:760px){.cmp{grid-template-columns:1fr}.cmp .new{border-left:none;border-top:1px solid var(--line-strong)}}
+
+/* primitive cards */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:54px}
+@media(max-width:880px){.cards{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:30px;position:relative;overflow:hidden;transition:border-color .4s,transform .4s}
+.card:hover{border-color:var(--line-strong);transform:translateY(-4px)}
+.card .num{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--teal-deep)}
+.card h3{margin:14px 0 6px}
+.card .was{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--ink-faint);margin-bottom:16px}
+.card p{font-size:1rem;color:var(--ink-dim);line-height:1.6}
+.card .glyph{position:absolute;right:-10px;top:-18px;font-family:var(--display);font-size:120px;font-style:italic;color:rgba(95,227,208,.05);font-weight:900;pointer-events:none}
+
+/* relator anatomy */
+.relator{margin-top:50px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:clamp(26px,4vw,48px)}
+.tuple{font-family:var(--mono);font-size:clamp(1.1rem,2.6vw,1.7rem);text-align:center;color:var(--ink);letter-spacing:.04em;margin-bottom:34px}
+.tuple b{color:var(--teal)}
+.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:760px){.legend{grid-template-columns:1fr}}
+.legend div{border-top:1px solid var(--line);padding-top:14px}
+.legend .sym{font-family:var(--mono);font-size:1.3rem;color:var(--gold)}
+.legend .lb{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);margin:6px 0 4px}
+.legend .ds{font-size:.95rem;color:var(--ink-dim)}
+
+/* formula block */
+.formula{background:#0d0c0a;border:1px solid var(--line);border-left:2px solid var(--teal-deep);border-radius:10px;padding:26px 30px;margin:28px 0;overflow-x:auto}
+.formula.gold{border-left-color:var(--gold-deep)}
+.fcap{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin-top:14px}
+
+/* loop steps */
+.steps{margin-top:50px;display:grid;gap:0}
+.step{display:grid;grid-template-columns:64px 1fr;gap:24px;padding:26px 0;border-top:1px solid var(--line);align-items:start}
+.step:last-child{border-bottom:1px solid var(--line)}
+.step .n{font-family:var(--display);font-style:italic;font-size:2.4rem;font-weight:600;color:var(--teal);line-height:1}
+.step h3{font-size:1.25rem;margin-bottom:6px}
+.step p{color:var(--ink-dim);font-size:1.02rem;max-width:64ch}
+.step .tag{font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:.08em}
+
+/* layers */
+.layers{margin-top:50px;border-left:1px solid var(--line-strong);padding-left:0}
+.layer{display:grid;grid-template-columns:90px 1fr;gap:20px;padding:18px 0 18px 26px;position:relative;border-bottom:1px solid var(--line)}
+.layer::before{content:"";position:absolute;left:-4.5px;top:26px;width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px var(--teal)}
+.layer.adv::before{background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.layer .lid{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--ink-faint);padding-top:3px}
+.layer .lname{font-family:var(--display);font-weight:600;font-size:1.12rem}
+.layer .ldesc{color:var(--ink-dim);font-size:.96rem;margin-top:2px}
+.layer.adv .lname{color:var(--gold)}
+
+/* ramanujan section */
+#ramanujan{background:
+   radial-gradient(110% 80% at 80% 0%, rgba(227,178,91,.08), transparent 55%),
+   linear-gradient(180deg,var(--bg),#0c0a07 40%,var(--bg));
+   border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ram-hero h2{font-size:clamp(2.2rem,6vw,4.2rem)}
+.ram-hero h2 .gd{font-style:italic;font-weight:900}
+.ram-quote{font-family:var(--display);font-style:italic;font-size:clamp(1.2rem,2.6vw,1.7rem);color:var(--ink);max-width:50ch;margin-top:28px;line-height:1.4;padding-left:22px;border-left:2px solid var(--gold-deep)}
+.ram-quote span{display:block;font-style:normal;font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--gold-deep);margin-top:16px;text-transform:uppercase}
+.imports{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:60px}
+@media(max-width:840px){.imports{grid-template-columns:1fr}}
+.import{background:rgba(20,17,11,.7);border:1px solid var(--line);border-radius:16px;padding:30px;transition:border-color .4s,transform .4s}
+.import:hover{border-color:rgba(227,178,91,.35);transform:translateY(-4px)}
+.import .ix{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--gold-deep);display:flex;justify-content:space-between}
+.import h3{margin:16px 0 4px;font-size:1.3rem}
+.import .src{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-bottom:18px;letter-spacing:.03em}
+.import .map{color:var(--ink-dim);font-size:1rem;line-height:1.6}
+.import .map b{color:var(--gold);font-weight:600}
+.import .payoff{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--teal)}
+.import .payoff::before{content:"▸ ";color:var(--gold)}
+.congru{margin-top:60px;background:#0c0a07;border:1px solid rgba(227,178,91,.25);border-radius:16px;padding:clamp(26px,4vw,44px)}
+.congru .cg{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:26px 0}
+@media(max-width:680px){.congru .cg{grid-template-columns:1fr}}
+.congru .cgc{text-align:center;font-family:var(--mono);border:1px solid var(--line);border-radius:10px;padding:20px}
+.congru .cgc .big{font-size:1.1rem;color:var(--gold);letter-spacing:.02em}
+.congru .cgc .sm{font-size:11px;color:var(--ink-faint);margin-top:8px;letter-spacing:.1em;text-transform:uppercase}
+.heegner{margin-top:34px;display:flex;flex-wrap:wrap;gap:24px;align-items:baseline;font-family:var(--mono)}
+.heegner .v{font-size:clamp(.85rem,2.2vw,1.25rem);color:var(--gold);letter-spacing:.02em}
+.heegner .l{font-size:.95rem;color:var(--ink-dim);font-family:var(--serif);max-width:46ch}
+
+/* stat strip */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:54px;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{padding:30px 22px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stat .big{font-family:var(--display);font-weight:600;font-size:clamp(2rem,4vw,3rem);color:var(--teal);line-height:1}
+.stat .lb{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin-top:12px}
+
+/* criteria */
+.crit{margin-top:50px;display:grid;gap:14px}
+.critrow{display:grid;grid-template-columns:40px 1fr auto;gap:20px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 26px;transition:border-color .4s}
+.critrow:hover{border-color:var(--line-strong)}
+.critrow .cn{font-family:var(--display);font-style:italic;font-size:1.6rem;color:var(--ink-faint)}
+.critrow .ct{font-family:var(--display);font-weight:600;font-size:1.15rem}
+.critrow .cd{color:var(--ink-dim);font-size:.96rem;margin-top:3px}
+.pass{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--teal);border:1px solid var(--teal-deep);border-radius:999px;padding:6px 14px;white-space:nowrap}
+@media(max-width:680px){.critrow{grid-template-columns:30px 1fr}.pass{grid-column:2}}
+
+/* use case */
+.usecase{margin-top:50px;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+@media(max-width:840px){.usecase{grid-template-columns:1fr}}
+.uc-diagram{background:#0d0c0a;border:1px solid var(--line);border-radius:16px;padding:30px}
+.uc-diagram svg{width:100%;height:auto}
+.usecase p{color:var(--ink-dim);font-size:1.05rem;line-height:1.7;margin-bottom:16px}
+.usecase .tg{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--coral)}
+
+/* code */
+.codeblk{margin-top:30px;background:#0c0b09;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.codeblk .bar{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ink-faint)}
+.codeblk pre{padding:24px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.75;color:var(--ink)}
+.codeblk .cm{color:var(--ink-faint)}
+.codeblk .kw{color:var(--gold)}
+.codeblk .fn{color:var(--teal)}
+.copy{cursor:pointer;color:var(--ink-dim);border:1px solid var(--line);border-radius:6px;padding:4px 10px;transition:.25s;font-family:var(--mono);font-size:10.5px}
+.copy:hover{color:var(--teal);border-color:var(--teal-deep)}
+
+/* footer */
+footer{position:relative;z-index:3;border-top:1px solid var(--line);padding:clamp(60px,8vw,100px) clamp(20px,5vw,56px)}
+.foot{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:1.3fr 1fr;gap:40px}
+@media(max-width:760px){.foot{grid-template-columns:1fr}}
+.foot .big{font-family:var(--display);font-style:italic;font-weight:600;font-size:clamp(1.6rem,4vw,2.6rem);line-height:1.2}
+.foot a.btn{display:inline-block;margin-top:24px;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--teal-deep);color:var(--teal);padding:13px 24px;border-radius:999px;transition:.3s}
+.foot a.btn:hover{background:var(--teal);color:#04110f}
+.foot .meta{font-family:var(--mono);font-size:12px;color:var(--ink-faint);line-height:2}
+.foot .meta b{color:var(--ink-dim)}
+.cite{margin-top:24px;background:#0c0b09;border:1px solid var(--line);border-radius:10px;padding:16px;font-family:var(--mono);font-size:11px;color:var(--ink-dim);line-height:1.7;white-space:pre-wrap}
+.endline{text-align:center;font-family:var(--display);font-style:italic;color:var(--ink-faint);margin-top:70px;font-size:1.1rem}
+</style>
 </head>
 <body>
+<div id="progress"></div>
 
-    <div id="custom-cursor"></div>
-    <div class="hud-overlay"></div>
-    <div class="scanline"></div>
-    <canvas id="field-canvas" class="fixed inset-0 z-[-1]"></canvas>
+<nav id="nav">
+  <div class="brand">T<b>O</b>RIS</div>
+  <div class="navlinks">
+    <a href="#premise">Premise</a>
+    <a href="#difference">Difference</a>
+    <a href="#primitives">Primitives</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#ramanujan">Ramanujan</a>
+    <a href="#validation">Validation</a>
+    <a href="#start">Start</a>
+  </div>
+</nav>
 
-    <!-- TOP NAV -->
-    <div class="fixed top-0 left-0 w-full p-6 flex justify-between items-start pointer-events-none z-50">
-        <div class="pointer-events-auto glass-panel px-4 py-2 rounded-sm mono text-[10px] tracking-widest uppercase flex items-center gap-4">
-            <span class="text-gray-500">System:</span>
-            <span class="neon-text-blue">TORIS v0.1-alpha</span>
-            <span class="text-gray-700">|</span>
-            <span class="text-gray-500">Status:</span>
-            <span class="text-green-500">Inference_Active</span>
-        </div>
-        <div class="pointer-events-auto glass-panel px-4 py-2 rounded-sm mono text-[10px] tracking-widest uppercase text-right">
-            <div id="coord-display">X: 0.00 Y: 0.00 Z: 0.00</div>
-            <div id="perf-display" class="text-gray-500">S-Delta: 0.000ms</div>
-        </div>
+<!-- HERO -->
+<section id="hero">
+  <canvas id="field"></canvas>
+  <div class="wrap">
+    <div class="hero-kicker">Topological Relational Inference System · v1.0</div>
+    <h1 class="hero-title">T<span class="o">O</span>RIS</h1>
+    <div class="hero-sub">Meaning is not a location.<br>It is a <span class="tk">relationship</span>.</div>
+    <p class="hero-desc">A ground-up computational substrate for machine reasoning. It replaces the neuron, the vector space, and backpropagation with three new primitives — and grounds its mathematics in algebraic topology and the notebooks of Ramanujan.</p>
+    <div class="hero-tags">
+      <span><b>No</b> vectors</span>
+      <span><b>No</b> softmax</span>
+      <span><b>No</b> backpropagation</span>
+      <span><b>9</b> layers</span>
+      <span><b>231</b> tests passing</span>
+    </div>
+    <div class="scrollcue"><span class="dot"></span>Scroll to descend the architecture</div>
+  </div>
+</section>
+
+<!-- PREMISE -->
+<section id="premise" class="premise">
+  <div class="wrap">
+    <div class="eyebrow rv">01 — The premise</div>
+    <p class="rv d1">For a decade we taught machines that meaning is a <span class="cr">coordinate</span>. Transformers perfected the geometry of averages — and called interpolation <em>understanding</em>.</p>
+    <p class="small rv d2">There is a cost we rarely name. When two facts contradict, softmax <strong>averages them away</strong> — it cannot hold "A is true" and "A is false" at once, even when both are true in different contexts. When a goal changes, attention re-weights edges but never changes <em>which relationships exist</em>. And every token, surprising or mundane, pays the same quadratic price. The model cannot be surprised. It can only be weighted. TORIS begins from a different axiom — and follows the mathematics all the way down.</p>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- DIFFERENCE -->
+<section id="difference">
+  <div class="wrap">
+    <div class="eyebrow rv">02 — What is different</div>
+    <h2 class="rv d1">Not a better transformer.<br>A different <span class="tk">species</span>.</h2>
+    <p class="lead rv d2">Every axis of the architecture is re-derived from first principles. This is the line, drawn plainly.</p>
+
+    <div class="cmp rv d2">
+      <div class="col old">
+        <div class="ch">The old way · attention</div>
+        <div class="row"><div class="k">Core primitive</div><div class="v">Artificial neuron — a weighted sum</div></div>
+        <div class="row"><div class="k">Conceptual space</div><div class="v">Fixed coordinates in ℝ<sup>d</sup></div></div>
+        <div class="row"><div class="k">Learning signal</div><div class="v">Backpropagation — a global loss</div></div>
+        <div class="row"><div class="k">Memory / focus</div><div class="v">Attention re-weights a frozen graph</div></div>
+        <div class="row"><div class="k">Contradiction</div><div class="v"><span class="strike">held</span> softmax averages it away</div></div>
+        <div class="row"><div class="k">Compute</div><div class="v">Dense — every token costs the same</div></div>
+      </div>
+      <div class="col new">
+        <div class="ch">The TORIS way · relations</div>
+        <div class="row"><div class="k">Core primitive</div><div class="v">The <b>Relator</b> — a typed, directional transformation</div></div>
+        <div class="row"><div class="k">Conceptual space</div><div class="v">A <b>role distribution</b> Π over relation types</div></div>
+        <div class="row"><div class="k">Learning signal</div><div class="v">The <b>Surprise Gradient ΔS</b> — local anomaly only</div></div>
+        <div class="row"><div class="k">Memory / focus</div><div class="v">The <b>Goal Manifold</b> warps the topology itself</div></div>
+        <div class="row"><div class="k">Contradiction</div><div class="v"><b>Held</b> as live, productive tension — never collapsed</div></div>
+        <div class="row"><div class="k">Compute</div><div class="v"><b>Selective</b> — only surprise propagates</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- PRIMITIVES -->
+<section id="primitives">
+  <div class="wrap">
+    <div class="eyebrow rv">03 — The three primitives</div>
+    <h2 class="rv d1">Three replacements for<br>three pillars.</h2>
+    <p class="lead rv d2">Each old pillar of deep learning is swapped for a structure that carries <em>meaning about the connection itself</em> — not just a scalar.</p>
+
+    <div class="cards">
+      <div class="card rv d1"><div class="glyph">R</div>
+        <div class="num">replaces the neuron</div>
+        <h3>The Relator</h3>
+        <div class="was">weighted sum →</div>
+        <p>A typed, directional, surprise-bearing transformation between concepts. A connection now knows <em>what kind</em> of relationship it is — causal, contradictory, analogous — not merely how strong.</p>
+      </div>
+      <div class="card rv d2"><div class="glyph">F</div>
+        <div class="num">replaces the vector space</div>
+        <h3>The Relational Field</h3>
+        <div class="was">ℝ<sup>d</sup> →</div>
+        <p>A context-adaptive typed hypergraph. Concepts have no coordinates; they hold <em>roles</em> that shift with the goal. The field physically rewires as you reason.</p>
+      </div>
+      <div class="card rv d3"><div class="glyph">S</div>
+        <div class="num">replaces backpropagation</div>
+        <h3>The Surprise Gradient</h3>
+        <div class="was">global loss →</div>
+        <p>Local anomaly propagation. Confirmed predictions are suppressed at the source and cost nothing. Only what you did not expect flows forward.</p>
+      </div>
     </div>
 
-    <!-- LEFT: MANIFOLD -->
-    <div class="fixed left-8 top-1/2 -translate-y-1/2 w-64 h-auto z-40 pointer-events-none">
-        <div class="pointer-events-auto glass-panel p-6 rounded-2xl space-y-8">
-            <div>
-                <h3 class="mono text-xs uppercase tracking-widest text-gray-500 mb-6">Goal Manifold $\mathcal{G}$</h3>
-                <nav class="space-y-2">
-                    <div onclick="setGoal('synthesis')" class="manifold-tab active p-3 cursor-pointer mono text-xs uppercase tracking-tighter flex justify-between items-center" id="tab-synthesis">
-                        <span>Relational Synthesis</span>
-                        <span class="opacity-30">01</span>
-                    </div>
-                    <div onclick="setGoal('anomaly')" class="manifold-tab p-3 cursor-pointer mono text-xs uppercase tracking-tighter flex justify-between items-center" id="tab-anomaly">
-                        <span>Anomaly Detection</span>
-                        <span class="opacity-30">02</span>
-                    </div>
-                    <div onclick="setGoal('contradiction')" class="manifold-tab p-3 cursor-pointer mono text-xs uppercase tracking-tighter flex justify-between items-center" id="tab-contradiction">
-                        <span>Contradiction Resolve</span>
-                        <span class="opacity-30">03</span>
-                    </div>
-                    <div onclick="setGoal('sparse')" class="manifold-tab p-3 cursor-pointer mono text-xs uppercase tracking-tighter flex justify-between items-center" id="tab-sparse">
-                        <span>Sparse Generalization</span>
-                        <span class="opacity-30">04</span>
-                    </div>
-                </nav>
-            </div>
-            <div class="pt-6 border-t border-gray-800">
-                <h3 class="mono text-xs uppercase tracking-widest text-gray-500 mb-4">System Depth</h3>
-                <div class="relative h-48 w-full depth-navigator flex flex-col justify-between py-4">
-                    <div onclick="diveTo(0)" class="cursor-pointer group flex items-center gap-3 px-2 transition-all hover:text-cyan-400">
-                        <span class="mono text-[10px] opacity-40 group-hover:opacity-100">L0</span>
-                        <span class="text-xs uppercase tracking-widest font-bold">Primitives</span>
-                    </div>
-                    <div onclick="diveTo(1)" class="cursor-pointer group flex items-center gap-3 px-2 transition-all hover:text-cyan-400">
-                        <span class="mono text-[10px] opacity-40 group-hover:opacity-100">L1</span>
-                        <span class="text-xs uppercase tracking-widest font-bold">Surprise</span>
-                    </div>
-                    <div onclick="diveTo(2)" class="cursor-pointer group flex items-center gap-3 px-2 transition-all hover:text-cyan-400">
-                        <span class="mono text-[10px] opacity-40 group-hover:opacity-100">L2</span>
-                        <span class="text-xs uppercase tracking-widest font-bold">Engine</span>
-                    </div>
-                    <div onclick="diveTo(3)" class="cursor-pointer group flex items-center gap-3 px-2 transition-all hover:text-cyan-400">
-                        <span class="mono text-[10px] opacity-40 group-hover:opacity-100">L3</span>
-                        <span class="text-xs uppercase tracking-widest font-bold">Manifold</span>
-                    </div>
-                    <div onclick="diveTo(4)" class="cursor-pointer group flex items-center gap-3 px-2 transition-all hover:text-cyan-400">
-                        <span class="mono text-[10px] opacity-40 group-hover:opacity-100">L4</span>
-                        <span class="text-xs uppercase tracking-widest font-bold">Plasticity</span>
-                    </div>
-                    <div onclick="diveTo(5)" class="cursor-pointer group flex items-center gap-3 px-2 transition-all hover:text-cyan-400">
-                        <span class="mono text-[10px] opacity-40 group-hover:opacity-100">L5</span>
-                        <span class="text-xs uppercase tracking-widest font-bold">Experiments</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- relator anatomy -->
+    <div class="relator rv d2">
+      <div class="tuple"><b>R</b> = ( τ , src , tgt , σ , κ , ε )</div>
+      <div class="legend">
+        <div><div class="sym">τ</div><div class="lb">type</div><div class="ds">the kind of relation — 12 types incl. causal, contradicts, enables, analogous</div></div>
+        <div><div class="sym">src → tgt</div><div class="lb">direction</div><div class="ds">asymmetric by default; symmetry must be explicitly declared</div></div>
+        <div><div class="sym">σ</div><div class="lb">strength ∈ [0,1]</div><div class="ds">confidence in this relation</div></div>
+        <div><div class="sym">κ</div><div class="lb">salience ∈ [0,1]</div><div class="ds">how active this relation is under the current goal</div></div>
+        <div><div class="sym">ε</div><div class="lb">surprise ∈ ℝ≥0</div><div class="ds">deviation from what was predicted</div></div>
+        <div><div class="sym">Π</div><div class="lb">role distribution</div><div class="ds">a concept <em>is</em> a probability simplex over the roles it can play</div></div>
+      </div>
     </div>
 
-    <!-- CENTER WORKSPACE -->
-    <main class="fixed inset-0 flex items-center justify-center pointer-events-none z-10">
-        <div id="workspace" class="max-w-4xl w-full px-12 transition-all duration-1000 ease-in-out opacity-0 scale-95">
-            <div class="text-center mb-12">
-                <h1 id="layer-title" class="serif italic text-6xl md:text-8xl font-light mb-4 tracking-tight">
-                    The Relational Field
-                </h1>
-                <p id="layer-desc" class="mono text-xs uppercase tracking-[0.4em] text-gray-500">
-                    Current Depth: Layer 0 — Core Primitives
-                </p>
-            </div>
-            <div id="content-area" class="relative min-h-[400px] transition-all duration-700">
-                <div class="glass-panel p-12 rounded-3xl neon-border-blue text-center space-y-8">
-                    <p class="serif italic text-2xl text-gray-300 leading-relaxed">
-                        "Intelligence is not the location of a point in a vector space, <br>
-                        but the dynamic transformation of a relation."
-                    </p>
-                    <div class="flex justify-center gap-8">
-                        <div class="p-4 border border-gray-800 rounded-xl mono text-xs">
-                            <span class="text-gray-500 block mb-2">Primitive</span>
-                            <span class="neon-text-blue">The Relator $\mathcal{R}$</span>
-                        </div>
-                        <div class="p-4 border border-gray-800 rounded-xl mono text-xs">
-                            <span class="text-gray-500 block mb-2">Space</span>
-                            <span class="neon-text-blue">Relational Field $\mathcal{F}$</span>
-                        </div>
-                        <div class="p-4 border border-gray-800 rounded-xl mono text-xs">
-                            <span class="text-gray-500 block mb-2">Update</span>
-                            <span class="neon-text-blue">Surprise Gradient $\Delta S$</span>
-                        </div>
-                    </div>
-                    <button onclick="diveTo(1)" class="px-8 py-3 bg-white text-black mono text-[10px] uppercase font-black tracking-widest hover:bg-cyan-400 transition-colors rounded-full">
-                        Initiate Depth Dive $\to$
-                    </button>
-                </div>
-            </div>
-        </div>
-    </main>
+    <!-- surprise formula -->
+    <h3 class="rv d1" style="margin-top:60px">Surprise is topological — not Euclidean.</h3>
+    <p class="lead rv d2" style="margin-top:16px">No cosine. No dot product. TORIS measures <em>how the shape of knowledge changed</em>, decomposed into three parts.</p>
+    <div class="formula rv d2">
+      <div>\[ \Delta S(F_{\text{pred}},F_{\text{obs}}) \;=\; \alpha\,\Delta S_{\text{structural}} \;+\; \beta\,\Delta S_{\text{type}} \;+\; \gamma\,\Delta S_{\text{strength}} \]</div>
+      <div class="fcap">structural (α = 0.6): edges that appeared or vanished · type (β = 0.3): right edge, wrong kind · strength (γ = 0.1): right edge & kind, wrong confidence</div>
+    </div>
+    <p class="lead rv d2" style="margin-top:8px">A relator only propagates its surprise when <span class="mono tk">ε &gt; θ</span>. Confirmed predictions are silenced — the formal core of selective computation.</p>
+  </div>
+</section>
 
-    <!-- RIGHT: LOGS -->
-    <div class="fixed right-8 top-1/2 -translate-y-1/2 w-80 h-[70vh] pointer-events-none z-40">
-        <div class="pointer-events-auto glass-panel p-6 rounded-2xl h-full flex flex-col">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="mono text-xs uppercase tracking-widest text-gray-500">C-Log Stream</h3>
-                <div class="w-2 h-2 bg-magenta-500 rounded-full animate-pulse"></div>
-            </div>
-            <div id="contradiction-log" class="flex-1 overflow-y-auto mono text-[10px] space-y-4 pr-2">
-                <div class="text-gray-600 opacity-50 italic">Awaiting topological tension...</div>
-            </div>
-            <div class="mt-6 pt-6 border-t border-gray-800">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="mono text-[10px] uppercase text-gray-500">Current Probe</span>
-                    <span id="probe-id" class="mono text-[10px] text-cyan-400">NONE</span>
-                </div>
-                <div id="probe-details" class="space-y-3">
-                    <div class="h-4 w-full bg-gray-900 rounded-sm opacity-30"></div>
-                    <div class="h-4 w-2/3 bg-gray-900 rounded-sm opacity-30"></div>
-                </div>
-            </div>
-        </div>
+<div class="rule"></div>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <div class="wrap">
+    <div class="eyebrow rv">04 — The inference loop</div>
+    <h2 class="rv d1">Inference rewrites the field<br>it runs on.</h2>
+    <p class="lead rv d2">Not a forward pass over frozen weights. A cycle that predicts, is surprised, and physically reorganizes the graph — then warps it again toward the goal.</p>
+
+    <div class="steps">
+      <div class="step rv d1"><div class="n">i</div><div><h3>Warp <span class="tag">Φ(G, F)</span></h3><p>The Goal Manifold recomputes salience for every relator. Edges below threshold are <em>removed from the active topology</em>; relevant ones amplify. Two goals yield two structurally different fields — not two attention masks.</p></div></div>
+      <div class="step rv d1"><div class="n">ii</div><div><h3>Observe &amp; compare</h3><p>Incoming structure meets the warped prediction. The topological surprise ΔS is computed per relator.</p></div></div>
+      <div class="step rv d2"><div class="n">iii</div><div><h3>Gate <span class="tag">ε &gt; θ</span></h3><p>Confirmed predictions are suppressed and consume zero compute. Only surprising relators propagate forward.</p></div></div>
+      <div class="step rv d2"><div class="n">iv</div><div><h3>Rewire <span class="tag">add · strengthen · weaken · suppress</span></h3><p>Fast plasticity edits the topology in place: new relators are instantiated where surprise revealed a gap; perfect predictors fade into background.</p></div></div>
+      <div class="step rv d3"><div class="n">v</div><div><h3>Hold contradiction <span class="tag">R_a ⊗ R_b</span></h3><p>When relators contradict, they enter the Contradiction Log. A <em>productive</em> contradiction — where the tension itself is the answer — is never collapsed. Impossible under softmax.</p></div></div>
     </div>
 
-    <script>
-        const STATE = {
-            currentGoal: 'synthesis',
-            currentLayer: 0,
-            nodes: [],
-            links: [],
-            targets: {
-                synthesis: { color: 0x00F2FF, speed: 0.001 },
-                anomaly: { color: 0xFF00FF, speed: 0.005 },
-                contradiction: { color: 0xC5A059, speed: 0.003 },
-                sparse: { color: 0xFFFFFF, speed: 0.002 }
-            }
-        };
+    <h3 class="rv d1" style="margin-top:70px">Nine layers — primitives to certified surprise.</h3>
+    <div class="layers rv d2">
+      <div class="layer"><div class="lid">Layer 0</div><div><div class="lname">Primitives</div><div class="ldesc">Relator · ConceptState · RelationalField</div></div></div>
+      <div class="layer"><div class="lid">Layer 1</div><div><div class="lname">Surprise ΔS</div><div class="ldesc">the topological deviation metric</div></div></div>
+      <div class="layer"><div class="lid">Layer 2</div><div><div class="lname">Predictive Engine</div><div class="ldesc">project → observe → delta → propagate</div></div></div>
+      <div class="layer"><div class="lid">Layer 3</div><div><div class="lname">Goal Manifold</div><div class="ldesc">the warp operator Φ and the contradiction log</div></div></div>
+      <div class="layer"><div class="lid">Layer 4</div><div><div class="lname">Fast Plasticity</div><div class="ldesc">the field rewrites itself during inference</div></div></div>
+      <div class="layer"><div class="lid">Layer 5</div><div><div class="lname">Reasoning</div><div class="ldesc">chains · sparse generalization · the full loop</div></div></div>
+      <div class="layer adv"><div class="lid">Layer 6</div><div><div class="lname">Fast Surprise Dynamics</div><div class="ldesc">an O(n log n) approximation + a cyclic-wave propagation model</div></div></div>
+      <div class="layer adv"><div class="lid">Layer 7</div><div><div class="lname">Analytic Surprise</div><div class="ldesc">contour integral, Michel parameters, a running coupling for surprise</div></div></div>
+      <div class="layer adv"><div class="lid">Layer 8</div><div><div class="lname">Ramanujan Extension</div><div class="ldesc">circle method · suppression theorem · partition function</div></div></div>
+      <div class="layer adv"><div class="lid">Layer 9</div><div><div class="lname">Exact Surprise</div><div class="ldesc">a Rademacher series with certified error bounds</div></div></div>
+    </div>
+  </div>
+</section>
 
-        const LAYER_DATA = [
-            {
-                title: "The Relational Field",
-                desc: "Current Depth: Layer 0 — Core Primitives",
-                content: `
-                <div class="glass-panel p-12 rounded-3xl neon-border-blue text-center space-y-8">
-                    <p class="serif italic text-2xl text-gray-300 leading-relaxed">
-                        "Intelligence is not the location of a point in a vector space, <br>
-                        but the dynamic transformation of a relation."
-                    </p>
-                    <div class="flex justify-center gap-8">
-                        <div class="p-4 border border-gray-800 rounded-xl mono text-xs">
-                            <span class="text-gray-500 block mb-2">Primitive</span>
-                            <span class="neon-text-blue">The Relator $\mathcal{R}$</span>
-                        </div>
-                        <div class="p-4 border border-gray-800 rounded-xl mono text-xs">
-                            <span class="text-gray-500 block mb-2">Space</span>
-                            <span class="neon-text-blue">Relational Field $\mathcal{F}$</span>
-                        </div>
-                        <div class="p-4 border border-gray-800 rounded-xl mono text-xs">
-                            <span class="text-gray-500 block mb-2">Update</span>
-                            <span class="neon-text-blue">Surprise Gradient $\Delta S$</span>
-                        </div>
-                    </div>
-                    <button onclick="diveTo(1)" class="px-8 py-3 bg-white text-black mono text-[10px] uppercase font-black tracking-widest hover:bg-cyan-400 transition-colors rounded-full">
-                        Initiate Depth Dive $\to$
-                    </button>
-                </div>`
-            },
-            {
-                title: "The Logic of Surprise",
-                desc: "Current Depth: Layer 1 — Surprise Metrics",
-                content: `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="glass-panel p-8 rounded-3xl space-y-6">
-                        <h3 class="mono text-xs uppercase text-magenta-500">Surprise $\Delta S$</h3>
-                        <div class="text-2xl py-4 text-center">$$\Delta S = \alpha \Delta S_{struct} + \beta \Delta S_{type} + \gamma \Delta S_{strength}$$</div>
-                        <p class="serif italic text-gray-400 text-center">Computation concentrates exclusively on topological deviations.</p>
-                    </div>
-                    <div class="glass-panel p-8 rounded-3xl space-y-6">
-                        <h3 class="mono text-xs uppercase text-cyan-500">Predictive Coding</h3>
-                        <div class="mono text-[10px] space-y-2 opacity-70">
-                            <div class="flex justify-between"><span>Project F_pred</span> <span class="text-cyan-400">OK</span></div>
-                            <div class="flex justify-between"><span>Observe F_obs</span> <span class="text-cyan-400">OK</span></div>
-                            <div class="flex justify-between"><span>Compute Delta</span> <span class="text-magenta-500">CRITICAL</span></div>
-                        </div>
-                    </div>
-                </div>`
-            },
-            {
-                title: "The Predictive Engine",
-                desc: "Current Depth: Layer 2 — Project $\to$ Observe $\to$ Propagate",
-                content: `<div class="glass-panel p-12 rounded-3xl space-y-8"><div class="flex flex-col items-center gap-12"><div class="flex items-center gap-4 mono text-xs"><div class="p-2 border border-cyan-500/30 rounded">Project</div><div class="text-gray-600"> $\to$ </div><div class="p-2 border border-cyan-500/30 rounded">Observe</div><div class="text-gray-600"> $\to$ </div><div class="p-2 border border-magenta-500 rounded neon-text-magenta">S-Delta</div><div class="text-gray-600"> $\to$ </div><div class="p-2 border border-cyan-500/30 rounded">Propagate</div></div><p class="serif italic text-xl text-center text-gray-400 max-w-lg">A cycle of continuous relational refinement.</p></div></div>`
-            },
-            {
-                title: "Goal Manifold",
-                desc: "Current Depth: Layer 3 — Context-Driven Warping",
-                content: `<div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div class="glass-panel p-8 rounded-3xl space-y-4"><h3 class="mono text-xs uppercase text-gray-500">$\Phi(G, F) \to F'$</h3><p class="serif italic text-gray-300">The field is not static. Changing the goal transforms the entire topology.</p></div><div class="glass-panel p-8 rounded-3xl flex flex-col justify-center items-center text-center"><div class="mono text-xs uppercase text-cyan-400 mb-4">Current Manifold</div><div class="text-3xl serif italic" id="active-goal-display">Synthesis</div></div></div>`
-            },
-            {
-                title: "Structural Plasticity",
-                desc: "Current Depth: Layer 4 — Topology Rewriting",
-                content: `<div class="glass-panel p-12 rounded-3xl space-y-8 relative overflow-hidden"><h3 class="mono text-xs uppercase text-center text-gray-500">Real-time Topology Mutation</h3><div class="grid grid-cols-2 gap-4 mono text-[10px] uppercase"><div class="p-4 border border-gray-800 rounded hover:border-cyan-400 transition-colors">ADD: New Relators</div><div class="p-4 border border-gray-800 rounded hover:border-cyan-400 transition-colors">STRENGTHEN: σ $\uparrow$</div><div class="p-4 border border-gray-800 rounded hover:border-cyan-400 transition-colors">WEAKEN: σ $\downarrow$</div><div class="p-4 border border-gray-800 rounded hover:border-magenta-400 transition-colors">SUPPRESS: κ < θ</div></div></div>`
-            },
-            {
-                title: "The Evidence Base",
-                desc: "Current Depth: Layer 5 — Qualitatively New Behavior",
-                content: `<div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="glass-panel p-6 rounded-2xl space-y-4 hover:neon-border-blue transition-all cursor-pointer"><div class="mono text-[10px] text-gray-500 uppercase">Exp 01</div><div class="serif italic text-lg">Contradiction Retention</div><div class="h-1 w-full bg-gray-800"><div class="h-full bg-cyan-400 w-full"></div></div></div><div class="glass-panel p-6 rounded-2xl space-y-4 hover:neon-border-blue transition-all cursor-pointer"><div class="mono text-[10px] text-gray-500 uppercase">Exp 02</div><div class="serif italic text-lg">Goal-Warp Sensitivity</div><div class="h-1 w-full bg-gray-800"><div class="h-full bg-cyan-400 w-full"></div></div></div><div class="glass-panel p-6 rounded-2xl space-y-4 hover:neon-border-blue transition-all cursor-pointer"><div class="mono text-[10px] text-gray-500 uppercase">Exp 03</div><div class="serif italic text-lg">Sparse Generalization</div><div class="h-1 w-full bg-gray-800"><div class="h-full bg-cyan-400 w-full"></div></div></div></div>`
-            }
-        ];
+<!-- RAMANUJAN -->
+<section id="ramanujan">
+  <div class="wrap ram-hero">
+    <div class="eyebrow goldline rv"><span class="gold">05 — The Ramanujan significance</span></div>
+    <h2 class="rv d1">Why a relational AI<br>reaches for <span class="gd">Ramanujan</span>.</h2>
+    <div class="ram-quote rv d2">A relational field has a generating function. The moment you write it down, the partition theory of Srinivasa Ramanujan stops being a metaphor and becomes <em>the exact machinery</em> for computing surprise.
+      <span>Layer 8 · from the Collected Papers (1927)</span>
+    </div>
 
-        const cursor = document.getElementById('custom-cursor');
-        window.addEventListener('mousemove', (e) => {
-            gsap.to(cursor, { x: e.clientX - 12, y: e.clientY - 12, duration: 0.2 });
-            document.getElementById('coord-display').innerText = `X: ${(e.clientX/window.innerWidth).toFixed(2)} Y: ${(e.clientY/window.innerHeight).toFixed(2)} Z: ${STATE.currentLayer}.00`;
-        });
+    <p class="lead rv d2" style="margin-top:48px">The depth-<span class="mono">d</span> surprise of a field is a coefficient of its generating function \(Z_F(\kappa)\) — the same object form as the partition generating function \( \prod_n 1/(1-x^n) \). That single identification imports four of Ramanujan's results, each one buying a concrete computational power.</p>
 
-        const canvas = document.getElementById('field-canvas');
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    <div class="imports">
+      <div class="import rv d1">
+        <div class="ix"><span>I · Circle method</span><span>Hardy–Ramanujan, 1918</span></div>
+        <h3>Saddle points of surprise</h3>
+        <div class="src">"Asymptotic Formulae in Combinatory Analysis"</div>
+        <div class="map">The circle method extracts <b>p(n)</b> from dominant singularities on the unit circle. In TORIS the same contour integral extracts surprise at relational depth <b>d</b> from a single saddle point \( \kappa_{\text{saddle}}=\exp(\pi\sqrt{2d/3}/d) \).</div>
+        <div class="payoff">O(1) per depth — vs O(|E|^d) brute-force traversal</div>
+      </div>
 
-        const nodeGroup = new THREE.Group();
-        const edgeGroup = new THREE.Group();
-        scene.add(nodeGroup);
-        scene.add(edgeGroup);
+      <div class="import rv d2">
+        <div class="ix"><span>II · Partition congruences</span><span>Ramanujan, 1919</span></div>
+        <h3>A suppression theorem</h3>
+        <div class="src">"Some Properties of p(n)"</div>
+        <div class="map">Ramanujan saw, in MacMahon's tables, that <b>p(5m+4) ≡ 0 (mod 5)</b>. In a field with modular structure, entire classes of surprise <b>cancel exactly</b> at specific depths — TORIS skips them with zero approximation error.</div>
+        <div class="payoff">verified at 100% suppression accuracy (exp_11)</div>
+      </div>
 
-        const createNodes = () => {
-            nodeGroup.clear(); edgeGroup.clear(); STATE.nodes = []; STATE.links = [];
-            for (let i = 0; i < 60; i++) {
-                const geo = new THREE.SphereGeometry(0.2, 16, 16);
-                const mat = new THREE.MeshBasicMaterial({ color: i % 7 === 0 ? 0xFF00FF : 0x00F2FF, transparent: true, opacity: 0.7 });
-                const node = new THREE.Mesh(geo, mat);
-                node.position.set((Math.random()-0.5)*80, (Math.random()-0.5)*80, (Math.random()-0.5)*80);
-                node.id = `Concept_${i}`;
-                node.roleDist = { CAUSAL: Math.random(), CONTRADICTS: Math.random(), SENSE: Math.random() };
-                nodeGroup.add(node); STATE.nodes.push(node);
-            }
-            const edgeMat = new THREE.LineBasicMaterial({ color: 0x00F2FF, transparent: true, opacity: 0.1 });
-            for (let i = 0; i < 100; i++) {
-                const start = STATE.nodes[Math.floor(Math.random()*60)];
-                const end = STATE.nodes[Math.floor(Math.random()*60)];
-                const geo = new THREE.BufferGeometry().setFromPoints([start.position, end.position]);
-                const line = new THREE.Line(geo, edgeMat);
-                edgeGroup.add(line); STATE.links.push({ line, start, end });
-            }
-        };
-        createNodes();
-        camera.position.z = 100;
+      <div class="import rv d1">
+        <div class="ix"><span>III · The 1/π series</span><span>Ramanujan, 1914</span></div>
+        <h3>Goal-warp compression</h3>
+        <div class="src">"Modular Equations and Approximations to π"</div>
+        <div class="map">His series gives <b>eight digits of π from the first term</b>. The Goal Manifold warp Φ(G,F) converges the same way for a coherent goal — a near-integer test auto-switches between a 3-term shortcut and full iteration.</div>
+        <div class="payoff">1 term → 7.6×10⁻⁸ · 2 terms → machine precision</div>
+      </div>
 
-        function animate() {
-            requestAnimationFrame(animate);
-            const target = STATE.targets[STATE.currentGoal];
-            nodeGroup.rotation.y += target.speed;
-            edgeGroup.rotation.y += target.speed;
-            STATE.nodes.forEach((n, i) => {
-                const t = Date.now() * 0.001;
-                n.position.x += Math.sin(t + i) * 0.01;
-                n.position.y += Math.cos(t + i) * 0.01;
-            });
-            STATE.links.forEach(l => {
-                const p = l.line.geometry.attributes.position.array;
-                p[0]=l.start.position.x; p[1]=l.start.position.y; p[2]=l.start.position.z;
-                p[3]=l.end.position.x; p[4]=l.end.position.y; p[5]=l.end.position.z;
-                l.line.geometry.attributes.position.needsUpdate = true;
-            });
-            renderer.render(scene, camera);
-        }
-        animate();
+      <div class="import rv d2">
+        <div class="ix"><span>IV · Rogers–Ramanujan</span><span>Rogers &amp; Ramanujan, 1919</span></div>
+        <h3>Closed-form field entropy</h3>
+        <div class="src">"Proof of Certain Identities in Combinatory Analysis"</div>
+        <div class="map">Relators that contradict cannot both be active — exactly the hard-exclusion of the Baxter hard-hexagon model. For a chain contradiction structure, the count of valid field configurations is the <b>Rogers–Ramanujan product</b>, giving entropy in closed form.</div>
+        <div class="payoff">product = q-series identity to &lt; 0.001% (exp_13)</div>
+      </div>
+    </div>
 
-        function setGoal(goalId) {
-            STATE.currentGoal = goalId;
-            document.querySelectorAll('.manifold-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(`tab-${goalId}`).classList.add('active');
-            document.getElementById('active-goal-display').innerText = goalId.charAt(0).toUpperCase() + goalId.slice(1);
-            const target = STATE.targets[goalId];
-            gsap.to(nodeGroup.rotation, { y: nodeGroup.rotation.y + Math.PI, duration: 2, ease: "expo.inOut" });
-            const color = new THREE.Color(target.color);
-            STATE.nodes.forEach(n => { gsap.to(n.material.color, { r: color.r, g: color.g, b: color.b, duration: 1 }); });
-            triggerSurpriseEvent();
-        }
+    <!-- congruences detail -->
+    <div class="congru rv d2">
+      <h3 class="gd">The Suppression Theorem</h3>
+      <p class="lead" style="margin-top:14px;max-width:64ch">Ramanujan's three exact congruences — holding for <em>all</em> m — become structural zeros in relational surprise. At these depths, computation provably does nothing, so TORIS does nothing.</p>
+      <div class="cg">
+        <div class="cgc"><div class="big">p(5m+4) ≡ 0 (mod 5)</div><div class="sm">depths ≡ 4 (mod 5)</div></div>
+        <div class="cgc"><div class="big">p(7m+5) ≡ 0 (mod 7)</div><div class="sm">depths ≡ 5 (mod 7)</div></div>
+        <div class="cgc"><div class="big">p(11m+6) ≡ 0 (mod 11)</div><div class="sm">depths ≡ 6 (mod 11)</div></div>
+      </div>
 
-        function diveTo(layer) {
-            STATE.currentLayer = layer;
-            const data = LAYER_DATA[layer];
-            gsap.to("#workspace", { opacity: 0, scale: 0.95, duration: 0.5, onComplete: () => {
-                document.getElementById('layer-title').innerText = data.title;
-                document.getElementById('layer-desc').innerText = data.desc;
-                document.getElementById('content-area').innerHTML = data.content;
-                renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false });
-                gsap.to("#workspace", { opacity: 1, scale: 1, duration: 0.8, ease: "power4.out" });
-            }});
-        }
+      <h3 class="gd" style="margin-top:40px">Critical points — the Heegner analogy</h3>
+      <p class="lead" style="margin-top:14px;max-width:66ch">Ramanujan's constant \( e^{\pi\sqrt{163}} \) is almost an integer because 163 is a Heegner number. TORIS borrows the idea: a field whose partition function is nearly an integer sits at a <span class="gd">critical configuration</span> — maximum modular coherence, where all four results converge fastest.</p>
+      <div class="heegner">
+        <div class="v">e^(π√163) = 262 537 412 640 768 743.999 999 999 999 25…</div>
+        <div class="l">differs from an integer by ≈ 10⁻¹². In TORIS, <span class="gd">|Z<sub>F</sub>(κ) − round(Z<sub>F</sub>)| &lt; 10⁻⁴</span> flags a critical relational configuration.</div>
+      </div>
+    </div>
 
-        function triggerSurpriseEvent() {
-            const log = document.getElementById('contradiction-log');
-            const events = ["Sensing Relational Field... ΔS detected", "Symmetry Violation: R(A→B) ≠ R(B→A)", "ε = 0.92 > θ [CRITICAL]", "Warping Goal Manifold G_prime", "Instantiating Relator R(τ=Causal)", "Propagating Surprise Signal...", "Shattering Euclidean Coordinates", "C-Log Entry: Productive Tension Held"];
-            const msg = events[Math.floor(Math.random()*events.length)];
-            const div = document.createElement('div');
-            div.className = "p-2 border-l-2 border-magenta-500 bg-magenta-500/5 animate-pulse";
-            div.innerHTML = `<span class="text-magenta-500 font-bold">!! SURPRISE !!</span><br>${msg}`;
-            log.prepend(div);
-            if (log.childNodes.length > 15) log.removeChild(log.lastChild);
-        }
+    <p class="lead rv d2" style="margin-top:46px">Layers 7 and 9 extend this further — an analytic surprise functional with a <em>running coupling</em> (asymptotic freedom for surprise), and an exact <span class="gd">Rademacher series</span> that computes surprise to arbitrary precision with <em>certified</em> error bounds. The mathematics is not decoration. It is the engine.</p>
+  </div>
+</section>
 
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        window.addEventListener('mousedown', (e) => {
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(STATE.nodes);
-            if (intersects.length > 0) {
-                const node = intersects[0].object;
-                document.getElementById('probe-id').innerText = node.id;
-                document.getElementById('probe-details').innerHTML = `
-                    <div class="flex justify-between mono text-[10px]"><span>CAUSAL</span><span class="text-cyan-400">${node.roleDist.CAUSAL.toFixed(2)}</span></div>
-                    <div class="flex justify-between mono text-[10px]"><span>CONTRADICTS</span><span class="text-magenta-400">${node.roleDist.CONTRADICTS.toFixed(2)}</span></div>
-                    <div class="flex justify-between mono text-[10px]"><span>SENSE</span><span class="text-gold-400">${node.roleDist.SENSE.toFixed(2)}</span></div>
-                `;
-            }
-        });
+<!-- VALIDATION -->
+<section id="validation">
+  <div class="wrap">
+    <div class="eyebrow rv">06 — Validation</div>
+    <h2 class="rv d1">Tested on what transformers<br><span class="tk">structurally cannot</span> do.</h2>
+    <p class="lead rv d2">Not GLUE. Not MMLU. TORIS is evaluated on five behaviors that are impossible for attention-based models — and demonstrated end to end.</p>
 
-        window.addEventListener('DOMContentLoaded', () => {
-            gsap.to("#workspace", { opacity: 1, duration: 2, delay: 0.5 });
-            setInterval(triggerSurpriseEvent, 4000);
-            renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false });
-        });
-    </script>
+    <div class="stats rv d2">
+      <div class="stat"><div class="big">231</div><div class="lb">tests passing</div></div>
+      <div class="stat"><div class="big">9</div><div class="lb">layers implemented</div></div>
+      <div class="stat"><div class="big">16</div><div class="lb">experiments</div></div>
+      <div class="stat"><div class="big">5/5</div><div class="lb">criteria met</div></div>
+      <div class="stat"><div class="big">0</div><div class="lb">transformer ops</div></div>
+    </div>
+
+    <div class="crit">
+      <div class="critrow rv d1"><div class="cn">1</div><div><div class="ct">Contradiction retention</div><div class="cd">two incompatible relators held, both shaping the conclusion — never averaged</div></div><div class="pass">exp_01 · PASS</div></div>
+      <div class="critrow rv d1"><div class="cn">2</div><div><div class="ct">Goal-warp sensitivity</div><div class="cd">changing the goal changes which edges are active — not just their weights</div></div><div class="pass">exp_02 · PASS</div></div>
+      <div class="critrow rv d2"><div class="cn">3</div><div><div class="ct">Sparse generalization</div><div class="cd">4 seed relators → an 8-hop conclusion with calibrated uncertainty</div></div><div class="pass">exp_03 · PASS</div></div>
+      <div class="critrow rv d2"><div class="cn">4</div><div><div class="ct">Surprise selectivity</div><div class="cd">20 relators, 3 surprising → &gt;70% of compute concentrated on those 3</div></div><div class="pass">exp_04 · PASS</div></div>
+      <div class="critrow rv d3"><div class="cn">5</div><div><div class="ct">Structural drift</div><div class="cd">the field at t=50 is measurably different from the field at t=0</div></div><div class="pass">exp_05 · PASS</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- USE CASE -->
+<section id="usecase">
+  <div class="wrap">
+    <div class="eyebrow rv">07 — A use case it would otherwise flatten</div>
+    <h2 class="rv d1">The contradiction a transformer<br>cannot keep.</h2>
+    <div class="usecase">
+      <div class="uc-diagram rv d2">
+        <svg viewBox="0 0 360 230" role="img" aria-label="Fire safety relational field">
+          <defs>
+            <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5fe3d0"/></marker>
+            <marker id="arc" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#ff6b81"/></marker>
+            <marker id="arg" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#e3b25b"/></marker>
+          </defs>
+          <!-- edges -->
+          <line x1="56" y1="60" x2="150" y2="60" stroke="#5fe3d0" stroke-width="1.4" marker-end="url(#ar)"/>
+          <text x="103" y="50" fill="#a89f8e" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">CAUSAL σ.9</text>
+          <path d="M178 70 Q 250 95 300 120" fill="none" stroke="#5fe3d0" stroke-width="1.4" marker-end="url(#ar)"/>
+          <text x="250" y="92" fill="#5fe3d0" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">ENABLES σ.8</text>
+          <path d="M178 84 Q 240 140 300 138" fill="none" stroke="#ff6b81" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arc)"/>
+          <text x="232" y="160" fill="#ff6b81" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">NEGATES σ.4</text>
+          <line x1="60" y1="175" x2="290" y2="135" stroke="#e3b25b" stroke-width="1.2" marker-end="url(#arg)"/>
+          <text x="150" y="178" fill="#b6863a" font-family="IBM Plex Mono" font-size="9" text-anchor="middle">EVIDENCES σ.7</text>
+          <!-- nodes -->
+          <g font-family="IBM Plex Mono" font-size="11" text-anchor="middle">
+            <circle cx="40" cy="60" r="22" fill="#13110d" stroke="#5fe3d0" stroke-width="1.3"/><text x="40" y="64" fill="#ece6da">fire</text>
+            <circle cx="164" cy="74" r="24" fill="#1a0d0d" stroke="#ff6b81" stroke-width="1.5"/><text x="164" y="78" fill="#ece6da">smoke</text>
+            <circle cx="318" cy="128" r="26" fill="#0f1413" stroke="#5fe3d0" stroke-width="1.3"/><text x="318" y="132" fill="#ece6da">evac</text>
+            <circle cx="44" cy="178" r="20" fill="#13110d" stroke="#e3b25b" stroke-width="1.2"/><text x="44" y="182" fill="#ece6da">alarm</text>
+          </g>
+          <text x="180" y="216" fill="#6b6354" font-family="IBM Plex Mono" font-size="8.5" text-anchor="middle">smoke ENABLES evac  ⊗  smoke NEGATES evac  →  PRODUCTIVE contradiction</text>
+        </svg>
+      </div>
+      <div class="rv d2">
+        <div class="tg">EMERGENCY REASONING · PRODUCTIVE CONTRADICTION</div>
+        <p style="margin-top:14px"><strong style="color:var(--ink)">Smoke enables evacuation</strong> — it triggers the alarm and signals danger. <strong style="color:var(--ink)">And smoke negates evacuation</strong> — dense smoke blocks the exit corridor. Both are true. The tension <em>is</em> the knowledge.</p>
+        <p>A transformer softmaxes this into one muddy probability and loses the structure of <em>why</em>. TORIS logs the <span class="mono cr">ENABLES ⊗ NEGATES</span> pair as a <span class="gd">productive contradiction</span> — both relators stay live.</p>
+        <p>When the goal warps the field — <em>"is the corridor passable?"</em> — the relevant side amplifies while the other is held in reserve, not deleted. The same machinery serves legal reasoning, medical differentials, and contradictory scientific evidence.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- START -->
+<section id="start">
+  <div class="wrap">
+    <div class="eyebrow rv">08 — Run it</div>
+    <h2 class="rv d1">Pure Python. No GPU.<br>No training run.</h2>
+    <p class="lead rv d2">Built on <span class="mono">networkx · numpy · scipy</span>. Clone it and watch all five criteria pass in under two seconds.</p>
+
+    <div class="codeblk rv d2">
+      <div class="bar"><span>bash · install &amp; verify</span><span class="copy" data-copy="git clone https://github.com/infinitule/TORIS.git
+cd TORIS
+python -m venv .venv && source .venv/bin/activate
+pip install -e &quot;.[dev]&quot;
+pytest tests/                                 # 231 tests
+python experiments/exp_toris_full_demo.py     # all 5 criteria">copy</span></div>
+<pre><span class="cm"># clone, install, and run the full demonstration</span>
+git clone https://github.com/infinitule/TORIS.git
+cd TORIS
+python -m venv .venv && source .venv/bin/activate
+pip install -e <span class="fn">".[dev]"</span>
+
+pytest tests/                                 <span class="cm"># 231 tests</span>
+python experiments/exp_toris_full_demo.py     <span class="cm"># all 5 criteria, end to end</span></pre>
+    </div>
+
+    <div class="codeblk rv d2">
+      <div class="bar"><span>python · a reasoning field that holds contradiction</span><span class="copy" data-copy="from toris.primitives.concept_state import ConceptState
+from toris.primitives.relator import Relator
+from toris.primitives.relation_types import RelationType as T
+from toris.field.relational_field import RelationalField
+from toris.goal.manifold import GoalManifold, Goal
+from toris.reasoning.inference import InferenceLoop
+
+field = RelationalField()
+fire, smoke, evac = ConceptState(id='fire'), ConceptState(id='smoke'), ConceptState(id='evacuation')
+field.add_relator(Relator(T.CAUSAL,  fire,  smoke, sigma=0.9, kappa=0.8))
+field.add_relator(Relator(T.ENABLES, smoke, evac,  sigma=0.7, kappa=0.6))
+field.add_relator(Relator(T.NEGATES, smoke, evac,  sigma=0.4, kappa=0.3))
+
+manifold = GoalManifold(primary=Goal(description='ensure_safety'))
+loop = InferenceLoop(field, manifold)
+rec  = loop.step([Relator(T.CAUSAL, fire, smoke, sigma=0.95, kappa=0.9)])
+print(rec.delta_s, len(manifold.contradiction_log))">copy</span></div>
+<pre><span class="kw">from</span> toris.primitives.relator <span class="kw">import</span> Relator
+<span class="kw">from</span> toris.primitives.relation_types <span class="kw">import</span> RelationType <span class="kw">as</span> T
+<span class="kw">from</span> toris.field.relational_field <span class="kw">import</span> RelationalField
+<span class="kw">from</span> toris.goal.manifold <span class="kw">import</span> GoalManifold, Goal
+<span class="kw">from</span> toris.reasoning.inference <span class="kw">import</span> InferenceLoop
+
+field = <span class="fn">RelationalField</span>()
+<span class="cm"># smoke ENABLES evacuation … and also NEGATES it — a real contradiction</span>
+field.<span class="fn">add_relator</span>(Relator(T.ENABLES, smoke, evac, sigma=<span class="tk">0.7</span>, kappa=<span class="tk">0.6</span>))
+field.<span class="fn">add_relator</span>(Relator(T.NEGATES, smoke, evac, sigma=<span class="tk">0.4</span>, kappa=<span class="tk">0.3</span>))
+
+manifold = <span class="fn">GoalManifold</span>(primary=Goal(description=<span class="fn">'ensure_safety'</span>))
+loop = <span class="fn">InferenceLoop</span>(field, manifold)
+rec  = loop.<span class="fn">step</span>([...])
+<span class="fn">print</span>(rec.delta_s, <span class="fn">len</span>(manifold.contradiction_log))   <span class="cm"># the tension survives →  1</span></pre>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot">
+    <div>
+      <div class="big rv">No vectors.<br>No softmax.<br>Just <span class="tk">relations</span>.</div>
+      <a class="btn rv d1" href="https://github.com/infinitule/TORIS">View the source →</a>
+    </div>
+    <div class="rv d2">
+      <div class="meta">
+        <b>TORIS</b> — Topological Relational Inference System<br>
+        Author · <b>Chandandeep Sharma</b><br>
+        License · research / non-commercial<br>
+        Stack · Python · networkx · numpy · scipy
+      </div>
+      <div class="cite">@software{sharma_toris_2026,
+  author = {Chandandeep Sharma},
+  title  = {TORIS: Topological Relational
+            Inference System},
+  year   = {2026},
+  url    = {github.com/infinitule/TORIS}
+}</div>
+    </div>
+  </div>
+  <div class="endline">Meaning is not a location. Meaning is a relationship.</div>
+</footer>
+
+<script>
+/* nav state + scroll progress */
+const nav=document.getElementById('nav'),prog=document.getElementById('progress');
+function onScroll(){
+  const y=window.scrollY;
+  nav.classList.toggle('scrolled',y>40);
+  const h=document.documentElement.scrollHeight-window.innerHeight;
+  prog.style.width=(h>0?(y/h)*100:0)+'%';
+}
+window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+/* reveal on scroll */
+const io=new IntersectionObserver((es)=>{
+  es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+},{threshold:0.12,rootMargin:'0px 0px -8% 0px'});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+/* copy buttons */
+document.querySelectorAll('.copy').forEach(b=>{
+  b.addEventListener('click',()=>{
+    navigator.clipboard.writeText(b.dataset.copy).then(()=>{
+      const t=b.textContent;b.textContent='copied ✓';b.style.color='var(--teal)';
+      setTimeout(()=>{b.textContent=t;b.style.color='';},1400);
+    });
+  });
+});
+
+/* KaTeX */
+document.addEventListener('DOMContentLoaded',()=>{
+  if(window.renderMathInElement){
+    renderMathInElement(document.body,{
+      delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],
+      throwOnError:false
+    });
+  }
+});
+
+/* ── living relational field (hero canvas) ───────────────────────── */
+(function(){
+  const cv=document.getElementById('field');if(!cv)return;
+  const ctx=cv.getContext('2d');
+  let W,H,DPR,nodes=[],edges=[],pulses=[],raf;
+  const COLORS=['#5fe3d0','#5fe3d0','#5fe3d0','#e3b25b','#ff6b81'];
+  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function size(){
+    DPR=Math.min(window.devicePixelRatio||1,2);
+    W=cv.clientWidth=window.innerWidth;
+    H=cv.clientHeight=window.innerHeight;
+    cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  function build(){
+    const N=Math.max(26,Math.min(46,Math.floor(W/34)));
+    nodes=[];for(let i=0;i<N;i++){
+      nodes.push({x:Math.random()*W,y:Math.random()*H,
+        vx:(Math.random()-.5)*.12,vy:(Math.random()-.5)*.12,r:Math.random()*1.6+1.1});
+    }
+    edges=[];
+    for(let i=0;i<N;i++){
+      // connect each node to ~2 nearest
+      const d=nodes.map((n,j)=>({j,dist:(n.x-nodes[i].x)**2+(n.y-nodes[i].y)**2})).sort((a,b)=>a.dist-b.dist);
+      for(let k=1;k<=2;k++){const j=d[k].j;if(j>i)edges.push({a:i,b:j,c:COLORS[(Math.random()*COLORS.length)|0]});}
+    }
+  }
+  function spawn(){
+    if(!edges.length)return;
+    const e=edges[(Math.random()*edges.length)|0];
+    pulses.push({edge:e,t:0,life:1,col:'#5fe3d0'});
+  }
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    // drift
+    for(const n of nodes){
+      n.x+=n.vx;n.y+=n.vy;
+      if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;
+    }
+    // edges
+    ctx.lineWidth=.6;
+    for(const e of edges){
+      const a=nodes[e.a],b=nodes[e.b];
+      const dx=a.x-b.x,dy=a.y-b.y,dist=Math.hypot(dx,dy);
+      const al=Math.max(0,1-dist/260)*.5;
+      if(al<=0)continue;
+      ctx.strokeStyle=e.c+Math.floor(al*70+12).toString(16).padStart(2,'0');
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    }
+    // nodes
+    for(const n of nodes){
+      ctx.fillStyle='rgba(236,230,218,.5)';
+      ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,7);ctx.fill();
+    }
+    // pulses (surprise propagating)
+    for(let i=pulses.length-1;i>=0;i--){
+      const p=pulses[i];p.t+=.018;
+      if(p.t>=1){
+        // hop to a neighbouring edge
+        const cur=p.edge.b;
+        const nb=edges.filter(e=>e.a===cur||e.b===cur);
+        if(nb.length&&p.life>.25){p.edge=nb[(Math.random()*nb.length)|0];p.t=0;p.life-=.34;}
+        else{pulses.splice(i,1);continue;}
+      }
+      const a=nodes[p.edge.a],b=nodes[p.edge.b];
+      const x=a.x+(b.x-a.x)*p.t,y=a.y+(b.y-a.y)*p.t;
+      const g=ctx.createRadialGradient(x,y,0,x,y,9);
+      g.addColorStop(0,'rgba(95,227,208,'+(.9*p.life)+')');
+      g.addColorStop(1,'rgba(95,227,208,0)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,9,0,7);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,'+(.9*p.life)+')';
+      ctx.beginPath();ctx.arc(x,y,1.7,0,7);ctx.fill();
+    }
+    raf=requestAnimationFrame(tick);
+  }
+  function start(){size();build();cancelAnimationFrame(raf);if(!reduce){tick();setInterval(spawn,1100);}else{tick();}}
+  let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(start,180)});
+  start();
+})();
+</script>
 </body>
 </html>
