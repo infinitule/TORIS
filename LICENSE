@@ -1,0 +1,54 @@
+TORIS — Topological Relational Inference System
+Copyright (c) 2026 Chandandeep Sharma. All rights reserved.
+
+AUTHORSHIP
+----------
+The following original contributions are the sole intellectual property
+of Chandandeep Sharma and may not be reproduced, published, patented,
+or used in derivative works without explicit written permission:
+
+  1. The typed Relator as the base computational primitive
+  2. Topological Surprise metric ΔS (structural + type + strength components)
+  3. Goal Manifold warping as a topological field transformation
+  4. The Contradiction Log with PRODUCTIVE resolution status
+  5. Three-timescale structural plasticity during inference
+  6. Role-distribution representation of concepts (Π: T → [0,1])
+  7. Circle method applied to relational field surprise (Layer 8)
+  8. Relational Suppression Theorem (partition congruences as depth zeros)
+  9. Ramanujan Goal Compression (1/π convergence for warp operator)
+ 10. TORIS Partition Function via Rogers-Ramanujan identities
+ 11. TORIS Ramanujan Critical Points (Heegner-number analog)
+ 12. Analytic Surprise Functional (TASF, Michel parameters, running coupling)
+ 13. Exact Surprise via Rademacher series with certified error bounds
+ 14. Harmonic Maass shadow correction for the productive-contradiction regime
+
+REFERENCE IMPLEMENTATION LICENSE
+---------------------------------
+This reference implementation (the `toris/` Python library) is released
+for research and non-commercial use only under the following terms:
+
+  Permission is granted to read, run, and cite this implementation for
+  academic research purposes, provided that:
+
+  (a) All publications, presentations, or derivative works that make use
+      of the TORIS architecture cite the original work:
+
+        Chandandeep Sharma, "TORIS: Topological Relational Inference System,"
+        2026. https://github.com/infinitule/TORIS
+
+  (b) The authorship attributions listed above are preserved intact in any
+      derivative work, fork, or adaptation.
+
+  (c) Commercial use, sublicensing, or incorporation into commercial
+      products requires explicit written permission from Chandandeep Sharma.
+      Contact: me@chandanofficial.com
+
+DISCLAIMER
+----------
+This software is provided "as is", without warranty of any kind. The author
+shall not be liable for any claim, damages, or other liability arising from
+its use.
+
+Claude Code was used as an implementation tool. The architecture, mathematics,
+experimental design, and all intellectual contributions listed above are
+entirely human-originated (Chandandeep Sharma).

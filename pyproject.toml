@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toris"
+version = "1.0.0"
+description = "TORIS — Topological Relational Inference System. A ground-up computational architecture replacing the neuron, vector space, and backpropagation with the typed relator, the relational field, and surprise-gradient inference."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary — © Chandandeep Sharma" }
+authors = [{ name = "Chandandeep Sharma", email = "me@chandanofficial.com" }]
+keywords = ["relational-inference", "topological", "surprise", "non-parametric", "reasoning"]
+
+[project.urls]
+Homepage = "https://github.com/infinitule/TORIS"
+Repository = "https://github.com/infinitule/TORIS"
+Documentation = "https://infinitule.github.io/TORIS"
+
+dependencies = [
+    "networkx>=3.0",
+    "numpy>=1.24",
+    "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "black>=23.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["toris*"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q"

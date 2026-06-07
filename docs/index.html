@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TORIS | Topological Relational Inference System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=JetBrains+Mono:wght@100;400;800&family=Outfit:wght@100;400;900&display=swap');
+
+        :root {
+            --obsidian: #020202;
+            --void: #000000;
+            --topo-blue: #00F2FF;
+            --surprise-magenta: #FF00FF;
+            --field-gold: #C5A059;
+            --panel-bg: rgba(2, 2, 2, 0.85);
+        }
+
+        body {
+            background-color: var(--void);
+            color: #E5E5E5;
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            cursor: none;
+        }
+
+        .serif { font-family: 'Cormorant Garamond', serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        #custom-cursor {
+            width: 24px; height: 24px;
+            border: 1px solid var(--topo-blue);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: screen;
+            transition: transform 0.1s ease-out;
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(0, 242, 255, 0.1);
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+
+        .neon-border-blue { border-color: var(--topo-blue); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
+        .neon-text-blue { color: var(--topo-blue); text-shadow: 0 0 10px var(--topo-blue); }
+        .neon-text-magenta { color: var(--surprise-magenta); text-shadow: 0 0 10px var(--surprise-magenta); }
+
+        .hud-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px) 0 0 / 40px 40px,
+                linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px) 0 0 / 40px 40px;
+            mask-image: radial-gradient(circle at center, black, transparent 80%);
+        }
+
+        .manifold-tab {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 2px solid transparent;
+        }
+        .manifold-tab.active {
+            border-left: 2px solid var(--topo-blue);
+            background: rgba(0, 242, 255, 0.05);
+            color: var(--topo-blue);
+            padding-left: 1.5rem;
+        }
+
+        .depth-navigator {
+            background: linear-gradient(to bottom, transparent, rgba(0, 242, 255, 0.05), transparent);
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 242, 255, 0.2); border-radius: 10px; }
+
+        .scanline {
+            width: 100%; height: 100px;
+            background: linear-gradient(to bottom, transparent, rgba(0, 242, 255, 0.05), transparent);
+            position: absolute;
+            top: -100px;
+            pointer-events: none;
+            animation: scan 8s linear infinite;
+        }
+        @keyframes scan {
+            0% { top: -100px; }
+            100% { top: 100vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="custom-cursor"></div>
+    <div class="hud-overlay"></div>
+    <div class="scanline"></div>
+    <canvas id="field-canvas" class="fixed inset-0 z-[-1]"></canvas>
+
+    <!-- TOP NAV -->
+    <div class="fixed top-0 left-0 w-full p-6 flex justify-between items-start pointer-events-none z-50">
+        <div class="pointer-events-auto glass-panel px-4 py-2 rounded-sm mono text-[10px] tracking-widest uppercase flex items-center gap-4">
+            <span class="text-gray-500">System:</span>
+            <span class="neon-text-blue">TORIS v0.1-alpha</span>
+            <span class="text-gray-700">|</span>
+            <span class="text-gray-500">Status:</span>
+            <span class="text-green-500">Inference_Active</span>
+        </div>
+        <div class="pointer-events-auto glass-panel px-4 py-2 rounded-sm mono text-[10px] tracking-widest uppercase text-right">
+            <div id="coord-display">X: 0.00 Y: 0.00 Z: 0.00</div>
+            <div id="perf-display" class="text-gray-500">S-Delta: 0.000ms</div>
+        </div>
+    </div>
+
+    <!-- LEFT: MANIFOLD -->
+    <div class="fixed left-8 top-1/2 -translate-y-1/2 w-64 h-auto z-40 pointer-events-none">
+        <div class="pointer-events-auto glass-panel p-6 rounded-2xl space-y-8">
+            <div>
+                <h3 class="mono text-xs uppercase tracking-widest text-gray-500 mb-6">Goal Manifold $\mathcal{G}$</h3>
+                <nav class="space-y-2">
+                    <div onclick="setGoal('synthesis')" class="manifold-tab active p-3 cursor-pointer mono text-xs uppercase tracking-tighter flex justify-between items-center" id="tab-synthesis">
+                        <span>Relational Synthesis</span>
+                        <span class="opacity-30">01</span>
+                    </div>
+                    <div onclick="setGoal('anomaly')" class="manifold-tab p-3 cursor-pointer mono text-xs uppercase tracking-tighter flex justify-between items-center" id="tab-anomaly">
+                        <span>Anomaly Detection</span>
+                        <span class="opacity-30">02</span>
+                    </div>
+                    <div onclick="setGoal('contradiction')" class="manifold-tab p-3 cursor-pointer mono text-xs uppercase tracking-tighter flex justify-between items-center" id="tab-contradiction">
+                        <span>Contradiction Resolve</span>
+                        <span class="opacity-30">03</span>
+                    </div>
+                    <div onclick="setGoal('sparse')" class="manifold-tab p-3 cursor-pointer mono text-xs uppercase tracking-tighter flex justify-between items-center" id="tab-sparse">
+                        <span>Sparse Generalization</span>
+                        <span class="opacity-30">04</span>
+                    </div>
+                </nav>
+            </div>
+            <div class="pt-6 border-t border-gray-800">
+                <h3 class="mono text-xs uppercase tracking-widest text-gray-500 mb-4">System Depth</h3>
+                <div class="relative h-48 w-full depth-navigator flex flex-col justify-between py-4">
+                    <div onclick="diveTo(0)" class="cursor-pointer group flex items-center gap-3 px-2 transition-all hover:text-cyan-400">
+                        <span class="mono text-[10px] opacity-40 group-hover:opacity-100">L0</span>
+                        <span class="text-xs uppercase tracking-widest font-bold">Primitives</span>
+                    </div>
+                    <div onclick="diveTo(1)" class="cursor-pointer group flex items-center gap-3 px-2 transition-all hover:text-cyan-400">
+                        <span class="mono text-[10px] opacity-40 group-hover:opacity-100">L1</span>
+                        <span class="text-xs uppercase tracking-widest font-bold">Surprise</span>
+                    </div>
+                    <div onclick="diveTo(2)" class="cursor-pointer group flex items-center gap-3 px-2 transition-all hover:text-cyan-400">
+                        <span class="mono text-[10px] opacity-40 group-hover:opacity-100">L2</span>
+                        <span class="text-xs uppercase tracking-widest font-bold">Engine</span>
+                    </div>
+                    <div onclick="diveTo(3)" class="cursor-pointer group flex items-center gap-3 px-2 transition-all hover:text-cyan-400">
+                        <span class="mono text-[10px] opacity-40 group-hover:opacity-100">L3</span>
+                        <span class="text-xs uppercase tracking-widest font-bold">Manifold</span>
+                    </div>
+                    <div onclick="diveTo(4)" class="cursor-pointer group flex items-center gap-3 px-2 transition-all hover:text-cyan-400">
+                        <span class="mono text-[10px] opacity-40 group-hover:opacity-100">L4</span>
+                        <span class="text-xs uppercase tracking-widest font-bold">Plasticity</span>
+                    </div>
+                    <div onclick="diveTo(5)" class="cursor-pointer group flex items-center gap-3 px-2 transition-all hover:text-cyan-400">
+                        <span class="mono text-[10px] opacity-40 group-hover:opacity-100">L5</span>
+                        <span class="text-xs uppercase tracking-widest font-bold">Experiments</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CENTER WORKSPACE -->
+    <main class="fixed inset-0 flex items-center justify-center pointer-events-none z-10">
+        <div id="workspace" class="max-w-4xl w-full px-12 transition-all duration-1000 ease-in-out opacity-0 scale-95">
+            <div class="text-center mb-12">
+                <h1 id="layer-title" class="serif italic text-6xl md:text-8xl font-light mb-4 tracking-tight">
+                    The Relational Field
+                </h1>
+                <p id="layer-desc" class="mono text-xs uppercase tracking-[0.4em] text-gray-500">
+                    Current Depth: Layer 0 — Core Primitives
+                </p>
+            </div>
+            <div id="content-area" class="relative min-h-[400px] transition-all duration-700">
+                <div class="glass-panel p-12 rounded-3xl neon-border-blue text-center space-y-8">
+                    <p class="serif italic text-2xl text-gray-300 leading-relaxed">
+                        "Intelligence is not the location of a point in a vector space, <br>
+                        but the dynamic transformation of a relation."
+                    </p>
+                    <div class="flex justify-center gap-8">
+                        <div class="p-4 border border-gray-800 rounded-xl mono text-xs">
+                            <span class="text-gray-500 block mb-2">Primitive</span>
+                            <span class="neon-text-blue">The Relator $\mathcal{R}$</span>
+                        </div>
+                        <div class="p-4 border border-gray-800 rounded-xl mono text-xs">
+                            <span class="text-gray-500 block mb-2">Space</span>
+                            <span class="neon-text-blue">Relational Field $\mathcal{F}$</span>
+                        </div>
+                        <div class="p-4 border border-gray-800 rounded-xl mono text-xs">
+                            <span class="text-gray-500 block mb-2">Update</span>
+                            <span class="neon-text-blue">Surprise Gradient $\Delta S$</span>
+                        </div>
+                    </div>
+                    <button onclick="diveTo(1)" class="px-8 py-3 bg-white text-black mono text-[10px] uppercase font-black tracking-widest hover:bg-cyan-400 transition-colors rounded-full">
+                        Initiate Depth Dive $\to$
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- RIGHT: LOGS -->
+    <div class="fixed right-8 top-1/2 -translate-y-1/2 w-80 h-[70vh] pointer-events-none z-40">
+        <div class="pointer-events-auto glass-panel p-6 rounded-2xl h-full flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="mono text-xs uppercase tracking-widest text-gray-500">C-Log Stream</h3>
+                <div class="w-2 h-2 bg-magenta-500 rounded-full animate-pulse"></div>
+            </div>
+            <div id="contradiction-log" class="flex-1 overflow-y-auto mono text-[10px] space-y-4 pr-2">
+                <div class="text-gray-600 opacity-50 italic">Awaiting topological tension...</div>
+            </div>
+            <div class="mt-6 pt-6 border-t border-gray-800">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="mono text-[10px] uppercase text-gray-500">Current Probe</span>
+                    <span id="probe-id" class="mono text-[10px] text-cyan-400">NONE</span>
+                </div>
+                <div id="probe-details" class="space-y-3">
+                    <div class="h-4 w-full bg-gray-900 rounded-sm opacity-30"></div>
+                    <div class="h-4 w-2/3 bg-gray-900 rounded-sm opacity-30"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STATE = {
+            currentGoal: 'synthesis',
+            currentLayer: 0,
+            nodes: [],
+            links: [],
+            targets: {
+                synthesis: { color: 0x00F2FF, speed: 0.001 },
+                anomaly: { color: 0xFF00FF, speed: 0.005 },
+                contradiction: { color: 0xC5A059, speed: 0.003 },
+                sparse: { color: 0xFFFFFF, speed: 0.002 }
+            }
+        };
+
+        const LAYER_DATA = [
+            {
+                title: "The Relational Field",
+                desc: "Current Depth: Layer 0 — Core Primitives",
+                content: `
+                <div class="glass-panel p-12 rounded-3xl neon-border-blue text-center space-y-8">
+                    <p class="serif italic text-2xl text-gray-300 leading-relaxed">
+                        "Intelligence is not the location of a point in a vector space, <br>
+                        but the dynamic transformation of a relation."
+                    </p>
+                    <div class="flex justify-center gap-8">
+                        <div class="p-4 border border-gray-800 rounded-xl mono text-xs">
+                            <span class="text-gray-500 block mb-2">Primitive</span>
+                            <span class="neon-text-blue">The Relator $\mathcal{R}$</span>
+                        </div>
+                        <div class="p-4 border border-gray-800 rounded-xl mono text-xs">
+                            <span class="text-gray-500 block mb-2">Space</span>
+                            <span class="neon-text-blue">Relational Field $\mathcal{F}$</span>
+                        </div>
+                        <div class="p-4 border border-gray-800 rounded-xl mono text-xs">
+                            <span class="text-gray-500 block mb-2">Update</span>
+                            <span class="neon-text-blue">Surprise Gradient $\Delta S$</span>
+                        </div>
+                    </div>
+                    <button onclick="diveTo(1)" class="px-8 py-3 bg-white text-black mono text-[10px] uppercase font-black tracking-widest hover:bg-cyan-400 transition-colors rounded-full">
+                        Initiate Depth Dive $\to$
+                    </button>
+                </div>`
+            },
+            {
+                title: "The Logic of Surprise",
+                desc: "Current Depth: Layer 1 — Surprise Metrics",
+                content: `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="glass-panel p-8 rounded-3xl space-y-6">
+                        <h3 class="mono text-xs uppercase text-magenta-500">Surprise $\Delta S$</h3>
+                        <div class="text-2xl py-4 text-center">$$\Delta S = \alpha \Delta S_{struct} + \beta \Delta S_{type} + \gamma \Delta S_{strength}$$</div>
+                        <p class="serif italic text-gray-400 text-center">Computation concentrates exclusively on topological deviations.</p>
+                    </div>
+                    <div class="glass-panel p-8 rounded-3xl space-y-6">
+                        <h3 class="mono text-xs uppercase text-cyan-500">Predictive Coding</h3>
+                        <div class="mono text-[10px] space-y-2 opacity-70">
+                            <div class="flex justify-between"><span>Project F_pred</span> <span class="text-cyan-400">OK</span></div>
+                            <div class="flex justify-between"><span>Observe F_obs</span> <span class="text-cyan-400">OK</span></div>
+                            <div class="flex justify-between"><span>Compute Delta</span> <span class="text-magenta-500">CRITICAL</span></div>
+                        </div>
+                    </div>
+                </div>`
+            },
+            {
+                title: "The Predictive Engine",
+                desc: "Current Depth: Layer 2 — Project $\to$ Observe $\to$ Propagate",
+                content: `<div class="glass-panel p-12 rounded-3xl space-y-8"><div class="flex flex-col items-center gap-12"><div class="flex items-center gap-4 mono text-xs"><div class="p-2 border border-cyan-500/30 rounded">Project</div><div class="text-gray-600"> $\to$ </div><div class="p-2 border border-cyan-500/30 rounded">Observe</div><div class="text-gray-600"> $\to$ </div><div class="p-2 border border-magenta-500 rounded neon-text-magenta">S-Delta</div><div class="text-gray-600"> $\to$ </div><div class="p-2 border border-cyan-500/30 rounded">Propagate</div></div><p class="serif italic text-xl text-center text-gray-400 max-w-lg">A cycle of continuous relational refinement.</p></div></div>`
+            },
+            {
+                title: "Goal Manifold",
+                desc: "Current Depth: Layer 3 — Context-Driven Warping",
+                content: `<div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div class="glass-panel p-8 rounded-3xl space-y-4"><h3 class="mono text-xs uppercase text-gray-500">$\Phi(G, F) \to F'$</h3><p class="serif italic text-gray-300">The field is not static. Changing the goal transforms the entire topology.</p></div><div class="glass-panel p-8 rounded-3xl flex flex-col justify-center items-center text-center"><div class="mono text-xs uppercase text-cyan-400 mb-4">Current Manifold</div><div class="text-3xl serif italic" id="active-goal-display">Synthesis</div></div></div>`
+            },
+            {
+                title: "Structural Plasticity",
+                desc: "Current Depth: Layer 4 — Topology Rewriting",
+                content: `<div class="glass-panel p-12 rounded-3xl space-y-8 relative overflow-hidden"><h3 class="mono text-xs uppercase text-center text-gray-500">Real-time Topology Mutation</h3><div class="grid grid-cols-2 gap-4 mono text-[10px] uppercase"><div class="p-4 border border-gray-800 rounded hover:border-cyan-400 transition-colors">ADD: New Relators</div><div class="p-4 border border-gray-800 rounded hover:border-cyan-400 transition-colors">STRENGTHEN: σ $\uparrow$</div><div class="p-4 border border-gray-800 rounded hover:border-cyan-400 transition-colors">WEAKEN: σ $\downarrow$</div><div class="p-4 border border-gray-800 rounded hover:border-magenta-400 transition-colors">SUPPRESS: κ < θ</div></div></div>`
+            },
+            {
+                title: "The Evidence Base",
+                desc: "Current Depth: Layer 5 — Qualitatively New Behavior",
+                content: `<div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="glass-panel p-6 rounded-2xl space-y-4 hover:neon-border-blue transition-all cursor-pointer"><div class="mono text-[10px] text-gray-500 uppercase">Exp 01</div><div class="serif italic text-lg">Contradiction Retention</div><div class="h-1 w-full bg-gray-800"><div class="h-full bg-cyan-400 w-full"></div></div></div><div class="glass-panel p-6 rounded-2xl space-y-4 hover:neon-border-blue transition-all cursor-pointer"><div class="mono text-[10px] text-gray-500 uppercase">Exp 02</div><div class="serif italic text-lg">Goal-Warp Sensitivity</div><div class="h-1 w-full bg-gray-800"><div class="h-full bg-cyan-400 w-full"></div></div></div><div class="glass-panel p-6 rounded-2xl space-y-4 hover:neon-border-blue transition-all cursor-pointer"><div class="mono text-[10px] text-gray-500 uppercase">Exp 03</div><div class="serif italic text-lg">Sparse Generalization</div><div class="h-1 w-full bg-gray-800"><div class="h-full bg-cyan-400 w-full"></div></div></div></div>`
+            }
+        ];
+
+        const cursor = document.getElementById('custom-cursor');
+        window.addEventListener('mousemove', (e) => {
+            gsap.to(cursor, { x: e.clientX - 12, y: e.clientY - 12, duration: 0.2 });
+            document.getElementById('coord-display').innerText = `X: ${(e.clientX/window.innerWidth).toFixed(2)} Y: ${(e.clientY/window.innerHeight).toFixed(2)} Z: ${STATE.currentLayer}.00`;
+        });
+
+        const canvas = document.getElementById('field-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        const nodeGroup = new THREE.Group();
+        const edgeGroup = new THREE.Group();
+        scene.add(nodeGroup);
+        scene.add(edgeGroup);
+
+        const createNodes = () => {
+            nodeGroup.clear(); edgeGroup.clear(); STATE.nodes = []; STATE.links = [];
+            for (let i = 0; i < 60; i++) {
+                const geo = new THREE.SphereGeometry(0.2, 16, 16);
+                const mat = new THREE.MeshBasicMaterial({ color: i % 7 === 0 ? 0xFF00FF : 0x00F2FF, transparent: true, opacity: 0.7 });
+                const node = new THREE.Mesh(geo, mat);
+                node.position.set((Math.random()-0.5)*80, (Math.random()-0.5)*80, (Math.random()-0.5)*80);
+                node.id = `Concept_${i}`;
+                node.roleDist = { CAUSAL: Math.random(), CONTRADICTS: Math.random(), SENSE: Math.random() };
+                nodeGroup.add(node); STATE.nodes.push(node);
+            }
+            const edgeMat = new THREE.LineBasicMaterial({ color: 0x00F2FF, transparent: true, opacity: 0.1 });
+            for (let i = 0; i < 100; i++) {
+                const start = STATE.nodes[Math.floor(Math.random()*60)];
+                const end = STATE.nodes[Math.floor(Math.random()*60)];
+                const geo = new THREE.BufferGeometry().setFromPoints([start.position, end.position]);
+                const line = new THREE.Line(geo, edgeMat);
+                edgeGroup.add(line); STATE.links.push({ line, start, end });
+            }
+        };
+        createNodes();
+        camera.position.z = 100;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const target = STATE.targets[STATE.currentGoal];
+            nodeGroup.rotation.y += target.speed;
+            edgeGroup.rotation.y += target.speed;
+            STATE.nodes.forEach((n, i) => {
+                const t = Date.now() * 0.001;
+                n.position.x += Math.sin(t + i) * 0.01;
+                n.position.y += Math.cos(t + i) * 0.01;
+            });
+            STATE.links.forEach(l => {
+                const p = l.line.geometry.attributes.position.array;
+                p[0]=l.start.position.x; p[1]=l.start.position.y; p[2]=l.start.position.z;
+                p[3]=l.end.position.x; p[4]=l.end.position.y; p[5]=l.end.position.z;
+                l.line.geometry.attributes.position.needsUpdate = true;
+            });
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        function setGoal(goalId) {
+            STATE.currentGoal = goalId;
+            document.querySelectorAll('.manifold-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${goalId}`).classList.add('active');
+            document.getElementById('active-goal-display').innerText = goalId.charAt(0).toUpperCase() + goalId.slice(1);
+            const target = STATE.targets[goalId];
+            gsap.to(nodeGroup.rotation, { y: nodeGroup.rotation.y + Math.PI, duration: 2, ease: "expo.inOut" });
+            const color = new THREE.Color(target.color);
+            STATE.nodes.forEach(n => { gsap.to(n.material.color, { r: color.r, g: color.g, b: color.b, duration: 1 }); });
+            triggerSurpriseEvent();
+        }
+
+        function diveTo(layer) {
+            STATE.currentLayer = layer;
+            const data = LAYER_DATA[layer];
+            gsap.to("#workspace", { opacity: 0, scale: 0.95, duration: 0.5, onComplete: () => {
+                document.getElementById('layer-title').innerText = data.title;
+                document.getElementById('layer-desc').innerText = data.desc;
+                document.getElementById('content-area').innerHTML = data.content;
+                renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false });
+                gsap.to("#workspace", { opacity: 1, scale: 1, duration: 0.8, ease: "power4.out" });
+            }});
+        }
+
+        function triggerSurpriseEvent() {
+            const log = document.getElementById('contradiction-log');
+            const events = ["Sensing Relational Field... ΔS detected", "Symmetry Violation: R(A→B) ≠ R(B→A)", "ε = 0.92 > θ [CRITICAL]", "Warping Goal Manifold G_prime", "Instantiating Relator R(τ=Causal)", "Propagating Surprise Signal...", "Shattering Euclidean Coordinates", "C-Log Entry: Productive Tension Held"];
+            const msg = events[Math.floor(Math.random()*events.length)];
+            const div = document.createElement('div');
+            div.className = "p-2 border-l-2 border-magenta-500 bg-magenta-500/5 animate-pulse";
+            div.innerHTML = `<span class="text-magenta-500 font-bold">!! SURPRISE !!</span><br>${msg}`;
+            log.prepend(div);
+            if (log.childNodes.length > 15) log.removeChild(log.lastChild);
+        }
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        window.addEventListener('mousedown', (e) => {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(STATE.nodes);
+            if (intersects.length > 0) {
+                const node = intersects[0].object;
+                document.getElementById('probe-id').innerText = node.id;
+                document.getElementById('probe-details').innerHTML = `
+                    <div class="flex justify-between mono text-[10px]"><span>CAUSAL</span><span class="text-cyan-400">${node.roleDist.CAUSAL.toFixed(2)}</span></div>
+                    <div class="flex justify-between mono text-[10px]"><span>CONTRADICTS</span><span class="text-magenta-400">${node.roleDist.CONTRADICTS.toFixed(2)}</span></div>
+                    <div class="flex justify-between mono text-[10px]"><span>SENSE</span><span class="text-gold-400">${node.roleDist.SENSE.toFixed(2)}</span></div>
+                `;
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            gsap.to("#workspace", { opacity: 1, duration: 2, delay: 0.5 });
+            setInterval(triggerSurpriseEvent, 4000);
+            renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Generated outputs (plots, logs)
+*.png
+*.jpg
+*.jpeg
+*.log
+exp_*_trajectory.png
+exp_*_scaling.png
+
+# Swap files
+.*.swp
+
+# lib directory (local wheels/deps)
+lib/
+
+# ── Private build artifacts (kept locally, never published) ──────────────────
+# Internal design/spec/prompt documents — not part of the public reference impl.
+CLAUDE.md
+TORIS_MASTER_PROMPT.md
+RECURSIVE_MASTER_PROMPT.md
+TORIS_MATH_SPEC.md
+TORIS_SECTION9_FAST_SURPRISE.md
+TORIS_SECTION9_FAST_SURPRISE_DYNAMICS.md
+TORIS_SECTION10_ANALYTIC_SURPRISE.md
+TORIS_SECTION11_RAMANUJAN_EXTENSION.md
+TORIS_SECTION12_EXACT_SURPRISE.md
+
+# Local agent/tooling config
+.claude/
