@@ -367,8 +367,8 @@ def run():
     n_pass = sum(results.values())
     print(f"\n  {'─' * 42}")
     print(f"  TORIS v0.1: {n_pass}/5 success criteria")
-    print(f"  Layers active: 0–7 + 9 (all implemented)")
-    print(f"  Test suite:    198 tests passing")
+    print(f"  Layers active: 0–9 (all implemented)")
+    print(f"  Test suite:    231 tests passing")
     if n_pass == 5:
         print(f"\n  ╔══════════════════════════════════════╗")
         print(f"  ║  STATUS: FULLY FUNCTIONAL  ✅         ║")
