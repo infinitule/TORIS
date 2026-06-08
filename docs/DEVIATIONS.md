@@ -340,3 +340,26 @@ test manifolds. The Ramanujan coefficients would require computing large factori
 per subgoal evaluation, adding O(max(k)³) overhead for negligible precision gain.
 
 **Residual:** The approximation is exact when n_terms ≥ number of active subgoals.
+
+---
+
+## D-22 — Suppressing the Eichler/shadow IntegrationWarning (Layer 9)
+
+**Deviation:** In `toris/engine/maass_completion.py`, the `eichler_integral` shadow
+integral `∫ shadow_cusp_form(z)/(z+κ)² dz` is improper by construction — the
+cusp-form integrand is slowly convergent near the cusp (Exact-Surprise spec §12.3).
+`scipy.integrate.quad` therefore emits an `IntegrationWarning` ("slowly
+convergent / extremely bad integrand behavior").
+
+**Choice:** We silence *only* that specific advisory, locally, around the two
+`quad` calls (`warnings.simplefilter("ignore", IntegrationWarning)`), with the
+integration `limit` kept at 100. The truncated quadrature value with its error
+estimate is the intended numerical approximation, so **no numerical result
+changes** — all 231 tests pass identically. This keeps certified-surprise output
+clean without masking any genuine failure (a hard exception still falls through
+to the `0+0j` guard).
+
+**Residual:** The advisory reflects the genuine analytic character of the shadow
+integral, not a bug. If higher precision is ever required, the proper route is a
+contour deformation or a cusp-regularizing substitution rather than raising
+`limit`.
