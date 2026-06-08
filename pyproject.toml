@@ -28,6 +28,9 @@ dev = [
     "pytest>=7.0",
     "black>=23.0",
 ]
+viz = [
+    "pyvis>=0.3",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]

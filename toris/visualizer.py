@@ -5,7 +5,14 @@
 from __future__ import annotations
 import os
 from typing import List, Dict, Tuple
-from pyvis.network import Network
+
+try:
+    from pyvis.network import Network
+except ModuleNotFoundError as _e:  # optional dependency
+    Network = None
+    _PYVIS_ERR = _e
+else:
+    _PYVIS_ERR = None
 
 from toris.field.relational_field import RelationalField
 from toris.primitives.relator import Relator
@@ -33,6 +40,11 @@ class FieldVisualizer:
     """Generates interactive HTML visualizations of the TORIS Relational Field."""
 
     def __init__(self, field: RelationalField):
+        if Network is None:
+            raise ImportError(
+                "FieldVisualizer requires the optional 'pyvis' dependency. "
+                "Install it with:  pip install 'toris[viz]'  (or  pip install pyvis)"
+            ) from _PYVIS_ERR
         self.field = field
 
     def export_html(self, filename: str, title: str = "TORIS Relational Field"):
