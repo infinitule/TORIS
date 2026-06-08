@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/assets/banner.svg" alt="TORIS — Topological Relational Inference System" width="100%">
+
 # 🌌 TORIS
 ### Topological Relational Inference System
 
@@ -324,6 +326,107 @@ tests/              231 passing tests
 docs/               MATH_SPEC · ARCHITECTURE · DEVIATIONS · RAMANUJAN_BRIDGE
                     · COMPLETE_SURPRISE_ARCHITECTURE · live site (index.html)
 ```
+
+---
+
+## Dive deeper
+
+<details>
+<summary><b>The 12 typed relations</b> — the alphabet of the field</summary>
+
+<br>
+
+Every Relator carries one of twelve relation types. Each is **asymmetric by
+default** and has a defined semantics for composition (`∘`) and contradiction (`⊗`).
+
+| Type | Meaning |
+|------|---------|
+| `CAUSAL` | A produces B |
+| `CONDITIONAL` | A activates B under a condition |
+| `CONTRADICTS` | A and B cannot both hold at once |
+| `CONTAINS` | A structurally includes B |
+| `ENABLES` | A makes B possible but does not cause it |
+| `VIOLATES` | A is inconsistent with rule B |
+| `ANALOGOUS` | A and B share relational structure across domains |
+| `REFINES` | B is a more precise version of A |
+| `TEMPORAL_BEFORE` | A occurs before B |
+| `EVIDENCES` | A raises the probability of B |
+| `NEGATES` | A suppresses B |
+| `INSTANTIATES` | A is a specific case of B |
+
+The contradiction operator fires on type pairs — e.g. `CAUSAL ⊗ NEGATES`,
+`ENABLES ⊗ VIOLATES`, `EVIDENCES ⊗ CONTRADICTS` — surfacing tension the goal
+makes relevant rather than averaging it away.
+
+</details>
+
+<details>
+<summary><b>The ΔS surprise metric, in full</b> — topological, not Euclidean</summary>
+
+<br>
+
+Surprise between a predicted field `F_pred` and an observed field `F_obs` is a
+weighted sum of three *structural* deviations — no cosine, no dot product:
+
+```
+ΔS = α·ΔS_structural + β·ΔS_type + γ·ΔS_strength          (α=0.6, β=0.3, γ=0.1)
+
+ΔS_structural = ( |E_obs \ E_pred| + |E_pred \ E_obs| ) / (|E_pred| + 1)
+ΔS_type       = (1/|E_match|+1) · Σ  D_type(τ_pred(e), τ_obs(e))
+ΔS_strength   = (1/|E_match|+1) · Σ  (σ_pred(e) − σ_obs(e))²
+```
+
+where `D_type` is a semantic distance over relation types
+(`0` identical · `0.3` similar · `0.7` unrelated · `1.0` contradictory).
+
+A single relator propagates only when `ε(R) > θ_ε` (default `0.2`). Confirmed
+predictions are suppressed at the source — the formal basis of selective compute.
+Full derivation in [`docs/MATH_SPEC.md`](docs/MATH_SPEC.md).
+
+</details>
+
+<details>
+<summary><b>All four Ramanujan imports, mapped</b> — why a relational AI reaches for number theory</summary>
+
+<br>
+
+The depth-`d` surprise of a field is a coefficient of its generating function
+`Z_F(κ)` — the same object form as the partition generating function
+`∏ₙ 1/(1−xⁿ)`. That single identification imports four of Ramanujan's results,
+each buying a concrete computational power.
+
+| Import | Source (Collected Papers, 1927) | TORIS mapping | Payoff |
+|--------|--------------------------------|---------------|--------|
+| **Circle method** | Hardy–Ramanujan, 1918 | surprise at depth `d` from one saddle point `κ_saddle = exp(π√(2d/3)/d)` | **O(1)** per depth vs O(\|E\|ᵈ) |
+| **Partition congruences** | Ramanujan, 1919 | `p(5m+4)≡0 (mod 5)` → entire depth classes of surprise cancel exactly | **100%** suppression (exp_11) |
+| **1/π series** | Ramanujan, 1914 | goal-warp Φ(G,F) converges like his π series; near-integer test auto-switches | **8 digits** from term one |
+| **Rogers–Ramanujan** | Rogers & Ramanujan, 1919 | valid contradiction-free configurations counted by the RR product | entropy in **closed form** |
+
+The Heegner analogy: `e^(π√163)` is almost an integer (off by ≈10⁻¹²) because 163
+is a Heegner number. TORIS flags a **critical configuration** when
+`|Z_F(κ) − round(Z_F)| < 10⁻⁴`. See [`docs/RAMANUJAN_BRIDGE.md`](docs/RAMANUJAN_BRIDGE.md).
+
+</details>
+
+<details>
+<summary><b>The full 9-layer breakdown</b></summary>
+
+<br>
+
+| Layer | Name | What it adds |
+|-------|------|--------------|
+| 0 | Primitives | Relator · ConceptState · RelationalField |
+| 1 | Surprise ΔS | the topological deviation metric |
+| 2 | Predictive Engine | project → observe → delta → propagate |
+| 3 | Goal Manifold | the warp operator Φ and the contradiction log |
+| 4 | Fast Plasticity | the field rewrites itself during inference |
+| 5 | Reasoning | chains · sparse generalization · the full loop |
+| 6 | Fast Surprise Dynamics | an O(n log n) approximation + cyclic-wave propagation |
+| 7 | Analytic Surprise | contour integral · Michel parameters · a running coupling |
+| 8 | Ramanujan Extension | circle method · suppression theorem · partition function |
+| 9 | Exact Surprise | a Rademacher series with certified error bounds |
+
+</details>
 
 ---
 

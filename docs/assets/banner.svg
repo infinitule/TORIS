@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="1280" height="400" role="img" aria-label="TORIS — Topological Relational Inference System">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0c0b09"/>
+      <stop offset="1" stop-color="#070605"/>
+    </linearGradient>
+    <radialGradient id="glowT" cx="22%" cy="18%" r="60%">
+      <stop offset="0" stop-color="#5fe3d0" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#5fe3d0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowG" cx="88%" cy="92%" r="55%">
+      <stop offset="0" stop-color="#e3b25b" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#e3b25b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="node" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ece6da"/>
+      <stop offset="1" stop-color="#8d8674"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1280" height="400" fill="url(#sky)"/>
+  <rect width="1280" height="400" fill="url(#glowT)"/>
+  <rect width="1280" height="400" fill="url(#glowG)"/>
+
+  <!-- relational field motif (right side) -->
+  <g stroke-linecap="round" opacity="0.92">
+    <!-- edges: teal = causal/enables, gold = evidences, coral dashed = negates -->
+    <line x1="780" y1="120" x2="900" y2="90"  stroke="#5fe3d0" stroke-width="1.4" opacity="0.55"/>
+    <line x1="900" y1="90"  x2="1030" y2="150" stroke="#5fe3d0" stroke-width="1.4" opacity="0.5"/>
+    <line x1="1030" y1="150" x2="1150" y2="110" stroke="#5fe3d0" stroke-width="1.4" opacity="0.45"/>
+    <line x1="820" y1="250" x2="940" y2="210" stroke="#e3b25b" stroke-width="1.3" opacity="0.5"/>
+    <line x1="940" y1="210" x2="1030" y2="150" stroke="#e3b25b" stroke-width="1.2" opacity="0.4"/>
+    <path d="M900 90 Q 1000 230 1090 250" fill="none" stroke="#ff6b81" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.55"/>
+    <line x1="780" y1="120" x2="820" y2="250" stroke="#5fe3d0" stroke-width="1.1" opacity="0.3"/>
+    <line x1="1090" y1="250" x2="1150" y2="110" stroke="#5fe3d0" stroke-width="1.1" opacity="0.3"/>
+    <line x1="940" y1="210" x2="1090" y2="250" stroke="#5fe3d0" stroke-width="1.1" opacity="0.3"/>
+  </g>
+  <!-- surprise pulse marker -->
+  <circle cx="1030" cy="150" r="9" fill="#5fe3d0" opacity="0.25"/>
+  <circle cx="1030" cy="150" r="3" fill="#ffffff" opacity="0.9"/>
+  <!-- nodes -->
+  <g>
+    <circle cx="780"  cy="120" r="6"  fill="url(#node)"/>
+    <circle cx="900"  cy="90"  r="7"  fill="url(#node)"/>
+    <circle cx="1030" cy="150" r="6.5" fill="url(#node)"/>
+    <circle cx="1150" cy="110" r="5.5" fill="url(#node)"/>
+    <circle cx="820"  cy="250" r="6"  fill="url(#node)"/>
+    <circle cx="940"  cy="210" r="5.5" fill="url(#node)"/>
+    <circle cx="1090" cy="250" r="6"  fill="url(#node)"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="96" y="190" font-family="Georgia, 'Times New Roman', serif" font-size="132" font-weight="700" letter-spacing="-4">
+    <tspan fill="#ece6da">T</tspan><tspan fill="#5fe3d0" font-style="italic">O</tspan><tspan fill="#ece6da">RIS</tspan>
+  </text>
+
+  <!-- thesis -->
+  <text x="100" y="248" font-family="Georgia, serif" font-style="italic" font-size="30" fill="#cdc6b8">Meaning is not a location. It is a <tspan fill="#5fe3d0">relationship</tspan>.</text>
+
+  <!-- subtitle -->
+  <text x="101" y="292" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="14" letter-spacing="3" fill="#8d8674">TOPOLOGICAL RELATIONAL INFERENCE SYSTEM</text>
+
+  <!-- tag chips -->
+  <g font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#a89f8e">
+    <rect x="100" y="320" width="116" height="30" rx="15" fill="none" stroke="#2a2620"/>
+    <text x="158" y="340" text-anchor="middle">no vectors</text>
+    <rect x="226" y="320" width="120" height="30" rx="15" fill="none" stroke="#2a2620"/>
+    <text x="286" y="340" text-anchor="middle">no softmax</text>
+    <rect x="356" y="320" width="118" height="30" rx="15" fill="none" stroke="#2a2620"/>
+    <text x="415" y="340" text-anchor="middle">9 layers</text>
+    <rect x="484" y="320" width="158" height="30" rx="15" fill="none" stroke="#1b8f81"/>
+    <text x="563" y="340" text-anchor="middle" fill="#5fe3d0">231 tests passing</text>
+  </g>
+</svg>

@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: "TORIS — Topological Relational Inference System"
+message: "If you use TORIS or build on its architecture, please cite it."
+type: software
+authors:
+  - family-names: Sharma
+    given-names: Chandandeep
+    email: me@chandanofficial.com
+abstract: >-
+  TORIS is a ground-up computational substrate for machine reasoning that
+  replaces the artificial neuron with the typed Relator, the Euclidean vector
+  space with a context-adaptive Relational Field, and backpropagation with a
+  local topological Surprise Gradient. It holds contradictions as productive
+  tension rather than averaging them away, warps its own topology toward a Goal
+  Manifold, and grounds its surprise metric in algebraic topology and the
+  partition theory of Ramanujan.
+version: "1.0.0"
+date-released: "2026-06-08"
+license: LicenseRef-Research-Only
+repository-code: "https://github.com/infinitule/TORIS"
+url: "https://infinitule.github.io/TORIS/"
+keywords:
+  - relational inference
+  - topological
+  - machine reasoning
+  - knowledge graph
+  - predictive coding
+  - non-euclidean
+  - Ramanujan
+  - surprise
