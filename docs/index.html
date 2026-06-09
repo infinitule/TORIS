@@ -108,7 +108,11 @@ em,.ital{font-style:italic}
 .hero-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:38px;font-family:var(--mono);font-size:12px;letter-spacing:.1em}
 .hero-tags span{border:1px solid var(--line-strong);border-radius:999px;padding:7px 15px;color:var(--ink-dim)}
 .hero-tags span b{color:var(--teal);font-weight:600}
-.scrollcue{margin-top:60px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-faint);display:flex;align-items:center;gap:12px}
+.hero-cta-row{margin-top:36px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.hero-cta{display:inline-block;font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:#04110f;background:var(--teal);padding:14px 26px;border-radius:999px;transition:.25s;box-shadow:0 0 0 0 rgba(95,227,208,.5)}
+.hero-cta:hover{filter:brightness(1.08);box-shadow:0 0 30px 0 rgba(95,227,208,.35);transform:translateY(-2px)}
+.hero-cta-note{font-family:var(--serif);font-style:italic;color:var(--ink-faint);font-size:1rem}
+.scrollcue{margin-top:54px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-faint);display:flex;align-items:center;gap:12px}
 .scrollcue .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.3)}}
 
@@ -277,7 +281,7 @@ footer{position:relative;z-index:3;border-top:1px solid var(--line);padding:clam
     <a href="#architecture">Architecture</a>
     <a href="#ramanujan">Ramanujan</a>
     <a href="#validation">Validation</a>
-    <a href="#start">Start</a>
+    <a href="playground.html" style="color:var(--teal)">Playground&nbsp;↗</a>
   </div>
 </nav>
 
@@ -295,6 +299,10 @@ footer{position:relative;z-index:3;border-top:1px solid var(--line);padding:clam
       <span><b>No</b> backpropagation</span>
       <span><b>9</b> layers</span>
       <span><b>231</b> tests passing</span>
+    </div>
+    <div class="hero-cta-row">
+      <a class="hero-cta" href="playground.html">▶ Try the live playground</a>
+      <span class="hero-cta-note">run a reasoning problem in your browser — no install</span>
     </div>
     <div class="scrollcue"><span class="dot"></span>Scroll to descend the architecture</div>
   </div>

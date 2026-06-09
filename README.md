@@ -16,9 +16,9 @@
 
 *No vectors. No softmax. No backpropagation. Just typed relations and surprise.*
 
-### [↗ Explore the interactive homepage](https://infinitule.github.io/TORIS/)
+### [▶ Try the live playground](https://infinitule.github.io/TORIS/playground.html) &nbsp;·&nbsp; [↗ Explore the homepage](https://infinitule.github.io/TORIS/)
 
-<sub>A long-scroll visual walkthrough: the architecture, the science, and why a relational AI reaches for Ramanujan.</sub>
+<sub>The **playground** runs a reasoning problem in your browser — flip the goal, watch the field re-shape, see a contradiction held instead of averaged. No install. The **homepage** is the long-scroll visual walkthrough of the architecture and the Ramanujan mathematics.</sub>
 
 </div>
 

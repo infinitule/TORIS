@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TORIS — Playground</title>
+<meta name="description" content="Run TORIS in your browser. Pick a reasoning problem, flip the goal, and watch the field hold a contradiction instead of averaging it away." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,400&family=Spectral:ital,wght@0,300;0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0907; --bg2:#100e0b; --panel:#13110d; --panel2:#171410;
+  --ink:#ece6da; --dim:#a89f8e; --faint:#6b6354;
+  --teal:#5fe3d0; --tealdeep:#1b8f81; --green:#6ee7b7;
+  --coral:#ff6b81; --red:#ff4d6d; --gold:#e3b25b; --purple:#b58cff;
+  --line:rgba(236,230,218,.10); --line2:rgba(236,230,218,.20);
+  --serif:'Spectral',Georgia,serif; --display:'Fraunces',Georgia,serif; --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(120% 80% at 20% -10%,rgba(95,227,208,.06),transparent 55%),radial-gradient(80% 60% at 100% 110%,rgba(227,178,91,.05),transparent 60%)}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--teal);color:#04110f}
+
+nav{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:14px clamp(16px,4vw,40px);background:rgba(10,9,7,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.brand{font-family:var(--mono);font-size:14px;letter-spacing:.3em;font-weight:600}
+.brand b{color:var(--teal)}
+.navlinks{display:flex;gap:22px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.navlinks a:hover{color:var(--teal)}
+
+.head{position:relative;z-index:1;padding:clamp(28px,5vw,52px) clamp(16px,4vw,40px) 8px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.34em;text-transform:uppercase;color:var(--tealdeep);display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.eyebrow::before{content:"";width:30px;height:1px;background:var(--tealdeep)}
+h1{font-family:var(--display);font-weight:900;font-size:clamp(2.2rem,6vw,3.6rem);line-height:.98;letter-spacing:-.03em}
+h1 .o{color:var(--teal);font-style:italic;font-weight:600}
+.sub{color:var(--dim);max-width:60ch;margin-top:14px;font-size:1.08rem}
+
+.app{position:relative;z-index:1;display:grid;grid-template-columns:1fr 380px;gap:22px;padding:24px clamp(16px,4vw,40px) 60px;max-width:1320px;margin:0 auto;align-items:start}
+@media(max-width:920px){.app{grid-template-columns:1fr}}
+
+/* stage */
+.stage{background:linear-gradient(180deg,var(--bg2),#0c0b09);border:1px solid var(--line);border-radius:18px;overflow:hidden;position:relative}
+.stagebar{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
+.stagebar .live{display:flex;align-items:center;gap:8px;color:var(--teal)}
+.stagebar .live .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+#canvas{display:block;width:100%;height:520px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;padding:12px 18px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--dim)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:16px;height:0;border-top:2px solid;display:inline-block}
+.legend i.dash{border-top-style:dashed}
+
+/* side */
+.side{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px}
+.card h3{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.situation{font-size:1.02rem;color:var(--ink);line-height:1.6}
+.situation b{color:var(--teal)}
+
+.goalrow{display:flex;flex-direction:column;gap:8px}
+.goalbtn{text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:var(--dim);cursor:pointer;font-family:var(--serif);font-size:.98rem;transition:.2s}
+.goalbtn:hover{border-color:var(--line2);color:var(--ink)}
+.goalbtn.active{border-color:var(--tealdeep);background:linear-gradient(180deg,rgba(95,227,208,.08),rgba(95,227,208,.02));color:var(--ink)}
+.goalbtn .gk{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--tealdeep);display:block;margin-bottom:3px}
+.goalbtn.active .gk{color:var(--teal)}
+
+select{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-family:var(--serif);font-size:1rem;cursor:pointer}
+select:focus{outline:none;border-color:var(--tealdeep)}
+
+.actions{display:flex;gap:10px}
+.btn{flex:1;cursor:pointer;border-radius:10px;padding:13px;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:.2s;border:1px solid var(--tealdeep);background:var(--teal);color:#04110f;font-weight:600}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent;color:var(--dim);border-color:var(--line)}
+.btn.ghost:hover{color:var(--ink);border-color:var(--line2)}
+
+.conc{font-family:var(--display);font-size:1.15rem;line-height:1.3;color:var(--ink)}
+.conc .v{color:var(--teal)}
+.conc.broken .v{color:var(--coral)}
+.path{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:10px;line-height:1.7;word-break:break-word}
+.sigma{display:flex;align-items:baseline;gap:10px;margin-top:12px}
+.sigma .big{font-family:var(--display);font-weight:600;font-size:2rem;color:var(--gold)}
+.sigma .lb{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+
+/* contradiction */
+.clog .none{color:var(--faint);font-style:italic;font-size:.95rem}
+.tension{border:1px solid rgba(255,107,129,.3);border-radius:12px;padding:14px;background:rgba(255,77,109,.04)}
+.tension .badge{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--coral);border:1px solid rgba(255,107,129,.4);border-radius:999px;padding:3px 9px;display:inline-block;margin-bottom:10px}
+.tension .pair{font-family:var(--mono);font-size:12.5px;color:var(--ink);line-height:1.9}
+.tension .pair .e{color:var(--green)}
+.tension .pair .n{color:var(--coral)}
+.tension .hold{font-size:.92rem;color:var(--dim);margin-top:10px;border-top:1px dashed var(--line2);padding-top:10px}
+.tension .hold b{color:var(--teal)}
+.tension .vs{font-size:.9rem;color:var(--faint);margin-top:8px}
+.tension .vs s{color:var(--coral);text-decoration-color:var(--coral)}
+
+.metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.metric{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 10px;text-align:center}
+.metric .big{font-family:var(--display);font-weight:600;font-size:1.5rem;color:var(--teal)}
+.metric .lb{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-top:5px}
+
+.coach{font-size:.92rem;color:var(--dim);font-style:italic;line-height:1.5;min-height:2.6em}
+.coach b{color:var(--gold);font-style:normal}
+
+footer{position:relative;z-index:1;border-top:1px solid var(--line);padding:26px 40px;text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--faint)}
+footer a{color:var(--dim)}footer a:hover{color:var(--teal)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="brand">T<b>O</b>RIS</div>
+  <div class="navlinks">
+    <a href="index.html">← Home</a>
+    <a href="https://github.com/infinitule/TORIS">GitHub</a>
+  </div>
+</nav>
+
+<div class="head">
+  <div class="eyebrow">Interactive · runs in your browser</div>
+  <h1>The T<span class="o">O</span>RIS Playground</h1>
+  <p class="sub">Pick a real reasoning problem. Flip the goal and watch the <b style="color:var(--teal)">field itself change shape</b>. Hit Reason and watch a conclusion form — while a genuine contradiction is <b style="color:var(--coral)">held, not averaged away</b>. No install, no code.</p>
+</div>
+
+<div class="app">
+  <!-- STAGE -->
+  <div class="stage">
+    <div class="stagebar">
+      <span id="scenarioName">reservoir field</span>
+      <span class="live"><span class="dot"></span> live relational field</span>
+    </div>
+    <canvas id="canvas"></canvas>
+    <div class="legend">
+      <span><i style="border-color:#5fe3d0"></i>causal</span>
+      <span><i style="border-color:#6ee7b7"></i>enables</span>
+      <span><i style="border-color:#e3b25b"></i>evidences</span>
+      <span><i class="dash" style="border-color:#ff6b81"></i>negates</span>
+      <span><i style="border-color:#b58cff"></i>contains</span>
+      <span style="color:var(--faint)"><i style="border-color:#3a352c"></i>suppressed by goal</span>
+    </div>
+  </div>
+
+  <!-- SIDE -->
+  <div class="side">
+    <div class="card">
+      <h3>① The problem</h3>
+      <label style="display:block;margin-bottom:12px">
+        <select id="scenarioSel"></select>
+      </label>
+      <div class="situation" id="situation"></div>
+    </div>
+
+    <div class="card">
+      <h3>② Choose a goal — it warps the field</h3>
+      <div class="goalrow" id="goalRow"></div>
+    </div>
+
+    <div class="card">
+      <h3>③ Reason</h3>
+      <div class="actions" style="margin-bottom:14px">
+        <button class="btn" id="reasonBtn">Reason →</button>
+        <button class="btn ghost" id="resetBtn">Reset</button>
+      </div>
+      <div class="conc" id="conclusion">Pick a goal, then press <span class="v">Reason</span>.</div>
+      <div class="path" id="path"></div>
+      <div class="sigma" id="sigmaBox" style="display:none">
+        <span class="big" id="sigmaVal">—</span>
+        <span class="lb">conclusion<br>confidence σ</span>
+      </div>
+    </div>
+
+    <div class="card clog">
+      <h3>⚖ Contradiction log</h3>
+      <div id="clog"></div>
+    </div>
+
+    <div class="card">
+      <h3>Field metrics</h3>
+      <div class="metrics">
+        <div class="metric"><div class="big" id="mActive">—</div><div class="lb">active edges</div></div>
+        <div class="metric"><div class="big" id="mSupp">—</div><div class="lb">suppressed</div></div>
+        <div class="metric"><div class="big" id="mContra">—</div><div class="lb">held tensions</div></div>
+      </div>
+      <div class="coach" id="coach" style="margin-top:14px"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  A faithful in-browser mirror of the TORIS core engine · <a href="https://github.com/infinitule/TORIS">source &amp; the real Python implementation on GitHub</a>
+</footer>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   A compact, faithful JS mirror of the TORIS core (Layers 0–5).
+   Typed relators · topological ΔS · goal-warp Φ · contradiction log · chains.
+   ════════════════════════════════════════════════════════════════════════ */
+const COLOR = {
+  CAUSAL:'#5fe3d0', ENABLES:'#6ee7b7', EVIDENCES:'#e3b25b', NEGATES:'#ff6b81',
+  CONTAINS:'#b58cff', CONTRADICTS:'#ff4d6d', CONDITIONAL:'#e3b25b',
+  VIOLATES:'#ff6b81', ANALOGOUS:'#5fe3d0', REFINES:'#9aa', TEMPORAL_BEFORE:'#9aa',
+  INSTANTIATES:'#9aa'
+};
+const DASHED = new Set(['NEGATES','VIOLATES','CONTRADICTS']);
+// contradiction relation on types (MATH_SPEC §1.3)
+const CONTRA = {
+  CAUSAL:['NEGATES','CONTRADICTS'], ENABLES:['NEGATES'], EVIDENCES:['NEGATES'],
+  CONTAINS:['VIOLATES'], VIOLATES:['CONTAINS','ENABLES'], CONDITIONAL:['CONTRADICTS'],
+  NEGATES:['CAUSAL','ENABLES','EVIDENCES'], CONTRADICTS:['CAUSAL','CONDITIONAL']
+};
+const THETA_KAPPA = 0.15;     // suppression threshold after warp
+const THETA_AMPLIFY = 0.5;
+
+function contradicts(a, b){
+  if(a.src!==b.src || a.tgt!==b.tgt) return false;
+  return (CONTRA[a.tau]||[]).includes(b.tau) || (CONTRA[b.tau]||[]).includes(a.tau);
+}
+// relevance(R, goal) = concept_overlap × type_fit   (MATH_SPEC §4.3)
+function relevance(r, goal){
+  const overlap = (goal.concepts.has(r.src) || goal.concepts.has(r.tgt)) ? 1.0 : 0.25;
+  const fit = goal.prefer.has(r.tau) ? 1.0 : 0.32;
+  return overlap * fit;
+}
+// warp Φ(G,F): recompute κ', mark active, surface contradictions
+function warp(scn, goal){
+  const log = [];
+  scn.relators.forEach(r=>{
+    r.kappaW = Math.max(0, Math.min(1, r.kappa * relevance(r, goal)));
+    r.active = r.kappaW >= THETA_KAPPA;
+    r.sigmaW = (r.active && r.kappaW > THETA_AMPLIFY) ? Math.min(1, r.sigma*(1+r.kappaW)) : r.sigma;
+  });
+  // surface contradictions among ACTIVE relators
+  const act = scn.relators.filter(r=>r.active);
+  for(let i=0;i<act.length;i++) for(let j=i+1;j<act.length;j++){
+    if(contradicts(act[i], act[j])) log.push([act[i], act[j]]);
+  }
+  scn.clog = log;
+  return log;
+}
+// reasoning chain over ACTIVE directed edges (Layer 5): σ_chain = Πσ_i
+function reason(scn, startId, endId){
+  const adj = {};
+  scn.relators.filter(r=>r.active).forEach(r=>{(adj[r.src]=adj[r.src]||[]).push(r);});
+  // BFS for shortest path, then take product of σ along it
+  const prev = {}; const q=[startId]; const seen=new Set([startId]);
+  while(q.length){
+    const u=q.shift(); if(u===endId) break;
+    (adj[u]||[]).forEach(r=>{ if(!seen.has(r.tgt)){seen.add(r.tgt);prev[r.tgt]={via:r,from:u};q.push(r.tgt);} });
+  }
+  if(!seen.has(endId)) return {broken:true, path:[], sigma:0};
+  const chain=[]; let n=endId;
+  while(n!==startId){ const p=prev[n]; chain.unshift(p.via); n=p.from; }
+  let sigma=1; chain.forEach(r=> sigma*=r.sigmaW);
+  return {broken:false, path:chain, sigma};
+}
+
+/* ── Scenarios ──────────────────────────────────────────────────────────── */
+const SCEN = {
+  reservoir:{
+    name:'reservoir field',
+    title:'Should the operator open the dam?',
+    situation:`Heavy rain fills a reservoir; pressure builds against the dam. Unrelieved, it may <b>breach</b> and destroy the town. The operator can open a <b>release</b> — but the release itself floods the valley. Opening the dam <b>both protects and harms</b> downstream safety.`,
+    question:['rain','town'],
+    questionText:'Will the rain threaten the town?',
+    nodes:{
+      rain:[.10,.18], reservoir:[.30,.30], sensors:[.10,.66], pressure:[.48,.46],
+      release:[.48,.80], breach:[.74,.28], downstream_safety:[.86,.56], town:[.86,.86]
+    },
+    edges:[
+      ['CAUSAL','rain','reservoir',.95,.90],
+      ['CAUSAL','reservoir','pressure',.90,.85],
+      ['EVIDENCES','sensors','pressure',.80,.70],
+      ['CAUSAL','pressure','breach',.75,.70],
+      ['NEGATES','breach','downstream_safety',.90,.85],
+      ['ENABLES','pressure','release',.70,.65],
+      ['NEGATES','release','pressure',.85,.75],
+      ['ENABLES','release','downstream_safety',.80,.80],   // ┐ contradiction
+      ['NEGATES','release','downstream_safety',.45,.55],   // ┘
+      ['CONTAINS','downstream_safety','town',.85,.80]
+    ],
+    goals:[
+      {key:'protect the town', concepts:['breach','downstream_safety','release','town'], prefer:['CAUSAL','NEGATES','ENABLES','CONTAINS']},
+      {key:'model the water',  concepts:['rain','reservoir','pressure','sensors'],       prefer:['CAUSAL','EVIDENCES']}
+    ]
+  },
+  fire:{
+    name:'fire-safety field',
+    title:'Should the occupants evacuate?',
+    situation:`A fire produces <b>smoke</b>, which sets off the <b>alarm</b> and signals people to evacuate. But dense smoke also <b>blocks the exit corridor</b> — the same smoke both <b>enables and negates</b> evacuation.`,
+    question:['fire','evacuation'],
+    questionText:'Should occupants evacuate?',
+    nodes:{
+      heat:[.08,.22], oxygen:[.08,.5], fuel:[.08,.78], fire:[.34,.5],
+      smoke:[.58,.28], alarm:[.84,.18], evacuation:[.86,.56], sprinkler:[.5,.84], damage:[.6,.7]
+    },
+    edges:[
+      ['CAUSAL','heat','fire',.95,.90],
+      ['CAUSAL','oxygen','fire',.90,.85],
+      ['CAUSAL','fuel','fire',.92,.88],
+      ['CAUSAL','fire','smoke',.85,.80],
+      ['EVIDENCES','smoke','alarm',.80,.75],
+      ['ENABLES','alarm','evacuation',.88,.82],
+      ['NEGATES','sprinkler','fire',.78,.70],
+      ['CAUSAL','fire','damage',.90,.85],
+      ['ENABLES','smoke','evacuation',.80,.78],   // ┐ contradiction
+      ['NEGATES','smoke','evacuation',.45,.55]     // ┘
+    ],
+    goals:[
+      {key:'evacuate occupants', concepts:['alarm','evacuation','smoke'], prefer:['ENABLES','EVIDENCES','NEGATES']},
+      {key:'suppress the fire',  concepts:['fire','sprinkler','fuel','oxygen','heat'], prefer:['CAUSAL','NEGATES']}
+    ]
+  }
+};
+
+/* ── State + build ──────────────────────────────────────────────────────── */
+let scn, goal, lastResult=null, pulses=[];
+
+function buildScenario(key){
+  const s = SCEN[key];
+  scn = {
+    key, name:s.name, title:s.title, situation:s.situation,
+    question:s.question, questionText:s.questionText,
+    nodes:s.nodes,
+    relators:s.edges.map(([tau,src,tgt,sigma,kappa])=>({tau,src,tgt,sigma,kappa,
+      kappaW:kappa, sigmaW:sigma, active:true})),
+    goals:s.goals.map(g=>({key:g.key, concepts:new Set(g.concepts), prefer:new Set(g.prefer)})),
+    clog:[]
+  };
+  goal = scn.goals[0];
+  lastResult=null; pulses=[];
+}
+
+/* ── Rendering ──────────────────────────────────────────────────────────── */
+const cv=document.getElementById('canvas'), ctx=cv.getContext('2d');
+let DPR=1, Wc=0, Hc=0;
+function resize(){
+  DPR=Math.min(devicePixelRatio||1,2);
+  Wc=cv.clientWidth; Hc=cv.clientHeight;
+  cv.width=Wc*DPR; cv.height=Hc*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+function P(id){ const n=scn.nodes[id]; return {x:24+n[0]*(Wc-48), y:20+n[1]*(Hc-40)}; }
+
+function curve(a,b,bend){
+  // quadratic control offset perpendicular to a→b (separates parallel edges)
+  const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+  const dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy)||1;
+  return {cx:mx - dy/len*bend, cy:my + dx/len*bend};
+}
+function drawArrow(a,b,c,color,active,dash,wide){
+  ctx.save();
+  ctx.strokeStyle=color; ctx.globalAlpha=active?1:0.22; ctx.lineWidth=wide?2.4:1.6;
+  ctx.setLineDash(dash?[5,4]:[]);
+  ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.quadraticCurveTo(c.cx,c.cy,b.x,b.y); ctx.stroke();
+  // arrowhead near b
+  const t=0.92, ix=(1-t)*(1-t)*a.x+2*(1-t)*t*c.cx+t*t*b.x, iy=(1-t)*(1-t)*a.y+2*(1-t)*t*c.cy+t*t*b.y;
+  const ang=Math.atan2(b.y-iy, b.x-ix);
+  ctx.setLineDash([]);
+  const bx=b.x-Math.cos(ang)*16, by=b.y-Math.sin(ang)*16;
+  ctx.beginPath(); ctx.moveTo(bx,by);
+  ctx.lineTo(bx-Math.cos(ang-0.4)*9, by-Math.sin(ang-0.4)*9);
+  ctx.lineTo(bx-Math.cos(ang+0.4)*9, by-Math.sin(ang+0.4)*9);
+  ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+  ctx.restore();
+}
+function render(){
+  ctx.clearRect(0,0,Wc,Hc);
+  // group parallel edges to bend them apart
+  const seen={};
+  scn.relators.forEach(r=>{ const k=r.src+'|'+r.tgt; seen[k]=(seen[k]||0); r._idx=seen[k]++; });
+  const counts={}; scn.relators.forEach(r=>{const k=r.src+'|'+r.tgt;counts[k]=(counts[k]||0)+1;});
+  // edges
+  scn.relators.forEach(r=>{
+    const a=P(r.src), b=P(r.tgt); const k=r.src+'|'+r.tgt;
+    const n=counts[k], bend = n>1 ? (r._idx - (n-1)/2)*34 : 0;
+    const c=curve(a,b,bend);
+    const onPath = lastResult && !lastResult.broken && lastResult.path.includes(r);
+    drawArrow(a,b,c, r.active?COLOR[r.tau]:'#3a352c', r.active, DASHED.has(r.tau), onPath);
+    // label
+    if(r.active){
+      ctx.save(); ctx.globalAlpha=.9; ctx.fillStyle=COLOR[r.tau];
+      ctx.font='10px "IBM Plex Mono", monospace'; ctx.textAlign='center';
+      ctx.fillText(r.tau.toLowerCase()+' σ'+r.sigma.toFixed(2).slice(1), c.cx, c.cy-3);
+      ctx.restore();
+    }
+  });
+  // pulses (surprise propagating along the reasoned path)
+  pulses.forEach(p=>{
+    const a=P(p.r.src), b=P(p.r.tgt); const k=p.r.src+'|'+p.r.tgt;
+    const n=counts[k], bend=n>1?(p.r._idx-(n-1)/2)*34:0; const c=curve(a,b,bend);
+    const t=p.t, x=(1-t)*(1-t)*a.x+2*(1-t)*t*c.cx+t*t*b.x, y=(1-t)*(1-t)*a.y+2*(1-t)*t*c.cy+t*t*b.y;
+    const g=ctx.createRadialGradient(x,y,0,x,y,11);
+    g.addColorStop(0,'rgba(255,255,255,.95)'); g.addColorStop(.4,'rgba(95,227,208,.8)'); g.addColorStop(1,'rgba(95,227,208,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,11,0,7); ctx.fill();
+  });
+  // nodes
+  Object.keys(scn.nodes).forEach(id=>{
+    const p=P(id);
+    const touched = scn.relators.some(r=>r.active && (r.src===id||r.tgt===id));
+    ctx.beginPath(); ctx.arc(p.x,p.y,7,0,7);
+    ctx.fillStyle=touched?'#13110d':'#0d0c0a';
+    ctx.fill(); ctx.lineWidth=1.6; ctx.strokeStyle=touched?'#5fe3d0':'#4a443a'; ctx.stroke();
+    ctx.fillStyle=touched?'#ece6da':'#6b6354';
+    ctx.font='600 12px "IBM Plex Mono", monospace'; ctx.textAlign='center';
+    ctx.fillText(id.replace('downstream_safety','downstream').replace('_',' '), p.x, p.y-13);
+  });
+}
+
+/* ── animation ──────────────────────────────────────────────────────────── */
+let raf=null;
+function animate(){
+  let alive=false;
+  pulses.forEach(p=>{ p.t+=0.022; if(p.t<1) alive=true; });
+  render();
+  if(alive){ raf=requestAnimationFrame(animate); }
+  else { raf=null; }
+}
+function firePulses(path){
+  pulses=[]; path.forEach((r,i)=> setTimeout(()=>{ pulses.push({r,t:0}); if(!raf) animate(); }, i*420));
+}
+
+/* ── UI wiring ──────────────────────────────────────────────────────────── */
+const $=id=>document.getElementById(id);
+function renderGoals(){
+  $('goalRow').innerHTML='';
+  scn.goals.forEach((g,i)=>{
+    const b=document.createElement('button');
+    b.className='goalbtn'+(g===goal?' active':'');
+    b.innerHTML=`<span class="gk">goal ${i+1}</span>${g.key}`;
+    b.onclick=()=>{ goal=g; refresh(true); };
+    $('goalRow').appendChild(b);
+  });
+}
+function renderClog(){
+  warp(scn, goal);
+  const el=$('clog');
+  if(!scn.clog.length){ el.innerHTML='<div class="none">No contradiction is active under this goal. Try the other goal — the tension surfaces when the goal makes it relevant.</div>'; return; }
+  el.innerHTML = scn.clog.map(([a,b])=>{
+    const ena = a.tau==='ENABLES'?a:b, neg = a.tau==='ENABLES'?b:a;
+    const blended = ((ena.sigma+neg.sigma)/2).toFixed(2);
+    return `<div class="tension">
+      <span class="badge">PRODUCTIVE · never collapsed</span>
+      <div class="pair">
+        <span class="e">${ena.tau}</span> ${ena.src}→${ena.tgt} · σ=${ena.sigma.toFixed(2)}<br>
+        <span class="n">${neg.tau}</span> ${neg.src}→${neg.tgt} · σ=${neg.sigma.toFixed(2)}
+      </div>
+      <div class="hold"><b>TORIS holds both</b> as live tension — the answer depends on context, so neither side is erased.</div>
+      <div class="vs">A transformer would softmax → <s>one blurred value ≈ ${blended}</s> (tension gone).</div>
+    </div>`;
+  }).join('');
+}
+function refresh(animateWarp){
+  renderGoals();
+  renderClog();
+  const active=scn.relators.filter(r=>r.active).length;
+  $('mActive').textContent=active;
+  $('mSupp').textContent=scn.relators.length-active;
+  $('mContra').textContent=scn.clog.length;
+  // reset conclusion
+  lastResult=null; pulses=[];
+  $('conclusion').className='conc';
+  $('conclusion').innerHTML=`Goal set to <span class="v">“${goal.key}”</span>. Press <span class="v">Reason</span> to trace it.`;
+  $('path').textContent='';
+  $('sigmaBox').style.display='none';
+  $('coach').innerHTML = animateWarp
+    ? `The goal just <b>re-warped the field</b> — notice which edges dimmed out. Same knowledge, different active topology.`
+    : `Flip the goal to see the field change shape. Press Reason to trace a conclusion.`;
+  render();
+}
+function doReason(){
+  warp(scn, goal);
+  const [s,e]=scn.question;
+  const res=reason(scn, s, e);
+  lastResult=res;
+  if(res.broken){
+    $('conclusion').className='conc broken';
+    $('conclusion').innerHTML=`${scn.questionText}<br><span class="v">Unreachable under this goal.</span>`;
+    $('path').textContent='The goal suppressed the edges that would connect them — so under this frame, the question cannot be answered. Switch goals and reason again.';
+    $('sigmaBox').style.display='none';
+    $('coach').innerHTML=`<b>That's the point:</b> changing the goal didn't just re-weight — it removed the path entirely. Reasoning is goal-relative.`;
+  } else {
+    const pathStr=[res.path[0].src, ...res.path.map(r=>r.tgt)].join(' → ');
+    $('conclusion').className='conc';
+    $('conclusion').innerHTML=`${scn.questionText}<br><span class="v">Yes — traced in ${res.path.length} hops.</span>`;
+    $('path').textContent=pathStr;
+    $('sigmaVal').textContent=res.sigma.toFixed(2);
+    $('sigmaBox').style.display='flex';
+    $('coach').innerHTML=`Only the edges on the path <b>fired</b> — surprise (and compute) concentrated where it mattered. Confidence σ is the composed strength along the chain.`;
+    firePulses(res.path);
+  }
+}
+
+function loadScenario(key){
+  buildScenario(key);
+  $('scenarioName').textContent=scn.name;
+  $('situation').innerHTML=scn.situation;
+  resize(); refresh(false);
+}
+
+// init
+const sel=$('scenarioSel');
+Object.keys(SCEN).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=SCEN[k].title; sel.appendChild(o); });
+sel.onchange=()=>loadScenario(sel.value);
+$('reasonBtn').onclick=doReason;
+$('resetBtn').onclick=()=>refresh(false);
+addEventListener('resize',()=>{resize();render();});
+loadScenario('reservoir');
+</script>
+</body>
+</html>
