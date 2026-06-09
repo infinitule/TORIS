@@ -18,7 +18,7 @@
 
 ### [▶ Try the live playground](https://infinitule.github.io/TORIS/playground.html) &nbsp;·&nbsp; [↗ Explore the homepage](https://infinitule.github.io/TORIS/)
 
-<sub>The **playground** runs a reasoning problem in your browser — flip the goal, watch the field re-shape, see a contradiction held instead of averaged. No install. The **homepage** is the long-scroll visual walkthrough of the architecture and the Ramanujan mathematics.</sub>
+<sub>The **playground** runs the reasoning core in your browser: four scenarios (dam · fire · medical · legal), **flip the goal** and watch the field re-shape, **step through inference** one relator at a time as confidence compounds, or **build your own field** and ask it a question — and see a contradiction held instead of averaged. No install. The **homepage** is the long-scroll visual walkthrough of the architecture and the Ramanujan mathematics.</sub>
 
 </div>
 
