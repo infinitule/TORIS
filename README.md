@@ -238,10 +238,17 @@ python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 
 pytest tests/                                  # 231 tests
+python experiments/exp_guided_tour.py          # ← best first run: one problem, all 9 layers, narrated
 python experiments/exp_toris_full_demo.py      # all 5 criteria, end to end
 ```
 
 Pure Python on `networkx · numpy · scipy`. No GPU, no PyTorch, no training run.
+
+> **New here? Start with the guided tour.** `exp_guided_tour.py` walks a single
+> reasoning problem — *should the operator open the dam?* — through all nine
+> layers with narration, from the typed Relator (Layer 0) to the certified
+> Rademacher surprise bound (Layer 9). It's the fastest way to understand what
+> each layer actually *does*.
 
 ### A minimal reasoning field
 
